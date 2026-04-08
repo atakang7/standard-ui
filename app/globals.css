@@ -1,0 +1,388 @@
+@import "tailwindcss";
+
+@theme {
+  --color-stone-50: #fbfbf9;
+  --color-stone-100: #f4f4f1;
+  --color-stone-200: #ebebe5;
+  --color-stone-300: #d8d7cf;
+  --color-stone-400: #b8b5aa;
+  --color-stone-500: #8f8a7b;
+  --color-stone-600: #6d6659;
+  --color-stone-700: #534d43;
+  --color-stone-800: #34302a;
+  --color-stone-900: #221f1a;
+}
+
+@font-face {
+  font-family: "ClaudeSans";
+  src: url("/fonts/claude/claude-ui-400.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ClaudeSans";
+  src: url("/fonts/claude/claude-ui-500.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+:root {
+  --font-ui: "ClaudeSans", "Soehne", "Sohne", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  --standard-flow-width: 78ch;
+  --fast-surface-bg: #faf9f5;
+  --fast-surface-text: #2f2f2d;
+  --fast-composer-bg: #fbfaf6;
+  --fast-composer-border: #d6d5d2;
+  --fast-composer-divider: #e6e5e2;
+  --fast-composer-placeholder: #8a8479;
+  --fast-composer-chip-bg: #fbfaf6;
+  --fast-composer-chip-text: #746d62;
+  --fast-composer-send-bg: #30302e;
+  --fast-composer-shadow: 0 10px 22px rgba(34, 30, 22, 0.05);
+  --standard-scrollbar-thumb: rgba(124, 114, 99, 0.34);
+  --standard-scrollbar-thumb-hover: rgba(124, 114, 99, 0.5);
+}
+
+html[data-color-mode="dark"] {
+  --fast-surface-bg: #262624;
+  --fast-surface-text: #e9e6df;
+  --fast-composer-bg: #262624;
+  --fast-composer-border: #4a4841;
+  --fast-composer-divider: #34332f;
+  --fast-composer-placeholder: #918a7d;
+  --fast-composer-chip-bg: #2a2926;
+  --fast-composer-chip-text: #c8c1b5;
+  --fast-composer-send-bg: #ece8de;
+  --fast-composer-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
+  --standard-scrollbar-thumb: rgba(175, 166, 149, 0.22);
+  --standard-scrollbar-thumb-hover: rgba(189, 180, 164, 0.34);
+}
+
+* {
+  min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--standard-scrollbar-thumb) transparent;
+}
+
+svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  @apply bg-stone-50 text-stone-900 antialiased;
+  font-family: var(--font-ui);
+  font-feature-settings: "ss01" on, "cv11" on;
+  letter-spacing: -0.005em;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+textarea,
+select,
+option {
+  font-family: inherit;
+}
+
+*:focus-visible {
+  outline: none;
+}
+
+button:focus,
+input:focus,
+textarea:focus,
+select:focus,
+a:focus,
+[tabindex]:focus {
+  outline: none;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  box-shadow: 0 0 0 2px rgba(142, 134, 121, 0.28);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 100;
+  transform: translateY(-140%);
+  border-radius: 8px;
+  background: #221f1a;
+  color: #fbfbf9;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: transform 0.18s ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+html[data-theme-switching="1"] *,
+html[data-theme-switching="1"] *::before,
+html[data-theme-switching="1"] *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--standard-scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--standard-scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.prism-code {
+  color: inherit;
+  text-shadow: none;
+}
+
+html[data-color-mode="dark"] .prism-code {
+  color: #ece8de;
+}
+
+html[data-color-mode="light"] .prism-code .token.comment,
+html[data-color-mode="light"] .prism-code .token.prolog,
+html[data-color-mode="light"] .prism-code .token.doctype,
+html[data-color-mode="light"] .prism-code .token.cdata {
+  color: #7a6f60;
+}
+
+html[data-color-mode="light"] .prism-code .token.punctuation {
+  color: #575148;
+}
+
+html[data-color-mode="light"] .prism-code .token.property,
+html[data-color-mode="light"] .prism-code .token.tag,
+html[data-color-mode="light"] .prism-code .token.constant,
+html[data-color-mode="light"] .prism-code .token.symbol,
+html[data-color-mode="light"] .prism-code .token.deleted {
+  color: #b42318;
+}
+
+html[data-color-mode="light"] .prism-code .token.boolean,
+html[data-color-mode="light"] .prism-code .token.number {
+  color: #b45309;
+}
+
+html[data-color-mode="light"] .prism-code .token.selector,
+html[data-color-mode="light"] .prism-code .token.attr-name,
+html[data-color-mode="light"] .prism-code .token.string,
+html[data-color-mode="light"] .prism-code .token.char,
+html[data-color-mode="light"] .prism-code .token.builtin,
+html[data-color-mode="light"] .prism-code .token.inserted {
+  color: #166534;
+}
+
+html[data-color-mode="light"] .prism-code .token.operator,
+html[data-color-mode="light"] .prism-code .token.entity,
+html[data-color-mode="light"] .prism-code .token.url,
+html[data-color-mode="light"] .prism-code .language-css .token.string,
+html[data-color-mode="light"] .prism-code .style .token.string {
+  color: #8b5e00;
+}
+
+html[data-color-mode="light"] .prism-code .token.atrule,
+html[data-color-mode="light"] .prism-code .token.attr-value,
+html[data-color-mode="light"] .prism-code .token.keyword {
+  color: #1d4ed8;
+}
+
+html[data-color-mode="light"] .prism-code .token.function,
+html[data-color-mode="light"] .prism-code .token.class-name {
+  color: #6d28d9;
+}
+
+html[data-color-mode="light"] .prism-code .token.regex,
+html[data-color-mode="light"] .prism-code .token.important,
+html[data-color-mode="light"] .prism-code .token.variable {
+  color: #a16207;
+}
+
+html[data-color-mode="dark"] .prism-code .token.comment,
+html[data-color-mode="dark"] .prism-code .token.prolog,
+html[data-color-mode="dark"] .prism-code .token.doctype,
+html[data-color-mode="dark"] .prism-code .token.cdata {
+  color: #918a7f;
+}
+
+html[data-color-mode="dark"] .prism-code .token.punctuation {
+  color: #c7c0b4;
+}
+
+html[data-color-mode="dark"] .prism-code .token.property,
+html[data-color-mode="dark"] .prism-code .token.tag,
+html[data-color-mode="dark"] .prism-code .token.constant,
+html[data-color-mode="dark"] .prism-code .token.symbol,
+html[data-color-mode="dark"] .prism-code .token.deleted {
+  color: #f3a98d;
+}
+
+html[data-color-mode="dark"] .prism-code .token.boolean,
+html[data-color-mode="dark"] .prism-code .token.number {
+  color: #efbe81;
+}
+
+html[data-color-mode="dark"] .prism-code .token.selector,
+html[data-color-mode="dark"] .prism-code .token.attr-name,
+html[data-color-mode="dark"] .prism-code .token.string,
+html[data-color-mode="dark"] .prism-code .token.char,
+html[data-color-mode="dark"] .prism-code .token.builtin,
+html[data-color-mode="dark"] .prism-code .token.inserted {
+  color: #a8d8a4;
+}
+
+html[data-color-mode="dark"] .prism-code .token.operator,
+html[data-color-mode="dark"] .prism-code .token.entity,
+html[data-color-mode="dark"] .prism-code .token.url,
+html[data-color-mode="dark"] .prism-code .language-css .token.string,
+html[data-color-mode="dark"] .prism-code .style .token.string {
+  color: #e8d9b0;
+}
+
+html[data-color-mode="dark"] .prism-code .token.atrule,
+html[data-color-mode="dark"] .prism-code .token.attr-value,
+html[data-color-mode="dark"] .prism-code .token.keyword {
+  color: #7db6ff;
+}
+
+html[data-color-mode="dark"] .prism-code .token.function,
+html[data-color-mode="dark"] .prism-code .token.class-name {
+  color: #c4b2f6;
+}
+
+html[data-color-mode="dark"] .prism-code .token.regex,
+html[data-color-mode="dark"] .prism-code .token.important,
+html[data-color-mode="dark"] .prism-code .token.variable {
+  color: #f4cd8e;
+}
+
+.prism-code .token.important,
+.prism-code .token.bold {
+  font-weight: 600;
+}
+
+.prism-code .token.italic {
+  font-style: italic;
+}
+
+.composer-focus-ring {
+  position: relative;
+}
+
+.composer-focus-ring:focus-within {
+  outline: 1px solid rgba(232, 226, 214, 0.3);
+}
+
+.composer-focus-ring textarea:focus-visible {
+  box-shadow: none !important;
+}
+
+.standard-oai-seq {
+  position: relative;
+  display: inline-grid;
+  width: 1ch;
+  height: 1em;
+  align-items: center;
+  justify-items: center;
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.standard-oai-seq > span {
+  grid-area: 1 / 1;
+  opacity: 0;
+  animation: standard-oai-seq 1.8s infinite ease-in-out;
+}
+
+.standard-oai-seq > span:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.standard-oai-seq > span:nth-child(3) {
+  animation-delay: 1.2s;
+}
+
+@keyframes standard-oai-seq {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  12%,
+  30% {
+    opacity: 1;
+    transform: translateY(-0.5px);
+  }
+  40% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

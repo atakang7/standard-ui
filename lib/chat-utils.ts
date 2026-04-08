@@ -1,0 +1,23 @@
+// Re-export from the canonical source. Import directly from "lib/utils" in new code.
+export {
+  normalizeErrorMessage,
+  extractStatusCode,
+  estimateTokensFromText,
+  clipToTail,
+  clamp as clampNumber,
+  formatBytes,
+  supportsAttachmentKind,
+  buildBoundedRequestMessages,
+  normalizeAttachment,
+  normalizeAttachments,
+  normalizeArtifact,
+  normalizeArtifacts,
+  areAttachmentsEqual,
+  modelCapabilitiesFromUnknown,
+  normalizeModelOption,
+  normalizeModelOptions,
+  normalizeMessageMetrics,
+  createFriendlyUiError,
+  normalizeChatSettings,
+  splitByCodeBlocks,
+} from "./utils";

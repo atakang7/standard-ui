@@ -1,0 +1,22 @@
+node_modules
+.next
+.standard-ui
+
+# local env files
+.env*
+
+# local runtime output
+nohup.out
+*.log
+*.pid
+*.pid.manual
+tsconfig.tsbuildinfo
+
+# private proxy helpers
+outlier-auth-pipeline.mjs
+outlier-load-auth.sh
+outlier-proxy.mjs
+outlier-up.sh
+
+# misc
+.DS_Store

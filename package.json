@@ -1,0 +1,43 @@
+{
+  "name": "standard-ui",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.63",
+    "@ai-sdk/google": "^3.0.52",
+    "@ai-sdk/openai": "^3.0.47",
+    "@ai-sdk/react": "^3.0.136",
+    "ai": "^6.0.134",
+    "fflate": "^0.8.2",
+    "next": "14.2.5",
+    "ollama-ai-provider": "^1.2.0",
+    "pdf-parse": "^1.1.4",
+    "prismjs": "^1.30.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/jest": "^30.0.0",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.14",
+    "@types/selenium-webdriver": "^4.35.5",
+    "autoprefixer": "^10.4.27",
+    "chromedriver": "^138.0.0",
+    "jest": "^30.3.0",
+    "postcss": "^8.5.8",
+    "selenium-webdriver": "^4.41.0",
+    "tailwindcss": "^4.2.2",
+    "ts-jest": "^29.4.6",
+    "typescript": "5.9.3"
+  }
+}
