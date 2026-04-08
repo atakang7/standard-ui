@@ -20,7 +20,7 @@
   Bring your own models. Keep your own routing. Ship one UI.
 </p>
 
-`standard-ui` is for teams that want ChatGPT-class ergonomics without welding the product surface to one model vendor or one private backend. It gives you one interface across OpenAI-compatible APIs, Anthropic, Ollama, and custom provider plugins while keeping the server layer thin enough to inspect, own, and modify.
+`standard-ui` is a chat UI that works across OpenAI-compatible APIs, Anthropic, Ollama, and custom provider plugins. It keeps the routing layer small and inspectable so teams can adapt it to their own model stack without rebuilding the whole interface.
 
 ## Why This Exists
 
@@ -30,12 +30,12 @@ Most chat UIs force an early tradeoff:
 - flexible backend, but internal-only tooling
 - lots of features, but lots of framework noise
 
-`standard-ui` tries to sit in the useful middle:
+`standard-ui` aims to sit in the useful middle:
 
-- one product surface across multiple backends
+- one interface across multiple backends
 - small enough to understand end to end
 - practical local-first behavior instead of hidden infrastructure magic
-- open-source by default, with private deployment glue kept out of the repo
+- flexible enough to fit different deployment setups
 
 ## What You Get
 
@@ -114,14 +114,14 @@ The repo is intentionally simple:
 1. [`app/page.tsx`](./app/page.tsx) owns the chat app shell, view state, drafts, and interaction flow.
 2. [`app/api/_lib/backends.ts`](./app/api/_lib/backends.ts) translates the UI's request model into provider-specific calls.
 3. [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts) keeps custom gateway definitions local and inspectable.
-4. [`components/chat`](./components/chat) holds the product surface: composer, messages, sidebar, settings, and provider-specific UI details.
+4. [`components/chat`](./components/chat) contains the UI: composer, messages, sidebar, settings, and provider-specific details.
 
 ## Philosophy
 
 - Standards over lock-in. The UI should adapt to your model stack, not force you into one vendor.
 - Local-first operator control. Runtime state, drafts, uploads, and provider definitions stay under your control.
 - Thin, inspectable infrastructure. You should be able to understand the whole request path without hunting through five services.
-- Pragmatic open source. Private proxy helpers, secret-bearing scripts, and deployment glue stay out of the public repo.
+- Keep the repository reusable. Secrets, credentials, and environment-specific tooling should stay out of version control.
 
 ## Docs
 

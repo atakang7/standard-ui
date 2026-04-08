@@ -25,7 +25,7 @@ body:
         1. Enable OpenAI-compatible backend
         2. Select model X
         3. Upload file Y
-        4. Send prompt Z
+        4. Send a message
     validations:
       required: true
   - type: textarea

@@ -42,7 +42,7 @@
   </text>
 
   <text x="148" y="374" fill="#BBAF9B" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20">
-    Built for teams that want one product surface without hardcoding one model vendor.
+    Built for teams that want one interface without hardcoding one model vendor.
   </text>
   <text x="148" y="406" fill="#BBAF9B" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20">
     Thin backend layer. Local-first state. Private infra stays private.
