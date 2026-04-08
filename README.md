@@ -50,6 +50,14 @@ Most chat UIs force an early tradeoff:
 
 ## Quick Start
 
+### Requirements
+
+- Node.js 20+
+- npm 10+
+- At least one backend: OpenAI-compatible API, Anthropic, Ollama, or a custom gateway
+
+### Local Setup
+
 ```bash
 npm install
 npm run dev
@@ -57,20 +65,37 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-Create a local `.env` file with only the providers you want to enable:
+### Environment Setup
+
+Create a local `.env` file with only the providers you want to enable.
+
+OpenAI-compatible example:
 
 ```dotenv
 OPENAI_ENABLED=true
 OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_API_KEY=sk-...
+```
 
-# Optional
-# ANTHROPIC_ENABLED=true
-# ANTHROPIC_BASE_URL=https://api.anthropic.com/v1
-# ANTHROPIC_API_KEY=sk-ant-...
+Anthropic example:
 
-# Optional
-# OLLAMA_BASE_URL=http://localhost:11434
+```dotenv
+ANTHROPIC_ENABLED=true
+ANTHROPIC_BASE_URL=https://api.anthropic.com/v1
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Ollama example:
+
+```dotenv
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+### Production Build
+
+```bash
+npm run build
+npm run start
 ```
 
 ## Supported Backends
@@ -103,6 +128,12 @@ The repo is intentionally simple:
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md): practical contribution rules
 - [`docs/engineering.md`](./docs/engineering.md): codebase map and engineering playbook
 - [`SECURITY.md`](./SECURITY.md): how to report vulnerabilities responsibly
+- [`CHANGELOG.md`](./CHANGELOG.md): release history
+
+## Releases
+
+- GitHub releases are used for versioned project milestones and release notes.
+- `CHANGELOG.md` tracks the human-readable history in-repo.
 
 ## Near-Term Focus
 

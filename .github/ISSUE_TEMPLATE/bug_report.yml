@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a reproducible bug in the app or provider adapters.
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for reproducible bugs. Do not include secrets, tokens, or private proxy details.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Short description of the problem
+      placeholder: Streaming stops after the first chunk on a custom OpenAI-compatible gateway
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps, ideally minimal
+      placeholder: |
+        1. Enable OpenAI-compatible backend
+        2. Select model X
+        3. Upload file Y
+        4. Send prompt Z
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Node version, browser, provider type, and any relevant setup details without secrets
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Sanitize secrets and private URLs before pasting

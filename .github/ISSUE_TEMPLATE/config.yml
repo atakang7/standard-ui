@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue
+    url: https://github.com/atakang7/standard-ui/blob/main/SECURITY.md
+    about: Please report vulnerabilities privately and avoid posting sensitive details in public issues.
+  - name: Engineering guide
+    url: https://github.com/atakang7/standard-ui/blob/main/docs/engineering.md
+    about: Read the codebase map and engineering notes before opening implementation questions.
