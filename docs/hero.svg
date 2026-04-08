@@ -1,0 +1,90 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hero-title hero-desc">
+  <title id="hero-title">standard-ui</title>
+  <desc id="hero-desc">A provider-agnostic chat UI for OpenAI-compatible APIs, Anthropic, Ollama, and custom gateways.</desc>
+  <defs>
+    <linearGradient id="bg" x1="80" y1="40" x2="1210" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F1C18"/>
+      <stop offset="1" stop-color="#2D2924"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="140" y1="100" x2="1120" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#26221D"/>
+      <stop offset="1" stop-color="#1D1A16"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="220" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2E7CE"/>
+      <stop offset="1" stop-color="#C8B796"/>
+    </linearGradient>
+    <filter id="shadow" x="86" y="56" width="1108" height="528" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#090806" flood-opacity="0.36"/>
+    </filter>
+    <pattern id="grid" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M28 0H0V28" stroke="#413A31" stroke-opacity="0.4"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="640" rx="24" fill="url(#bg)"/>
+  <rect width="1280" height="640" rx="24" fill="url(#grid)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="108" y="78" width="1064" height="484" rx="28" fill="url(#panel)" stroke="#4D4439"/>
+  </g>
+
+  <rect x="148" y="118" width="184" height="34" rx="17" fill="#2E2923" stroke="#51483C"/>
+  <text x="172" y="140" fill="#D7CDBD" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="16" font-weight="600" letter-spacing="0.08em">PROVIDER-AGNOSTIC CHAT UI</text>
+
+  <text x="148" y="224" fill="url(#accent)" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="76" font-weight="700" letter-spacing="-0.05em">standard-ui</text>
+
+  <text x="148" y="278" fill="#ECE5D8" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="25" font-weight="500">
+    One interface across OpenAI-compatible APIs, Anthropic,
+  </text>
+  <text x="148" y="314" fill="#ECE5D8" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="25" font-weight="500">
+    Ollama, and custom gateways.
+  </text>
+
+  <text x="148" y="374" fill="#BBAF9B" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20">
+    Built for teams that want one product surface without hardcoding one model vendor.
+  </text>
+  <text x="148" y="406" fill="#BBAF9B" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20">
+    Thin backend layer. Local-first state. Private infra stays private.
+  </text>
+
+  <g>
+    <rect x="148" y="452" width="146" height="38" rx="19" fill="#312C25" stroke="#575044"/>
+    <text x="177" y="476" fill="#EEE5D7" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600">streaming</text>
+
+    <rect x="310" y="452" width="156" height="38" rx="19" fill="#312C25" stroke="#575044"/>
+    <text x="339" y="476" fill="#EEE5D7" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600">attachments</text>
+
+    <rect x="482" y="452" width="118" height="38" rx="19" fill="#312C25" stroke="#575044"/>
+    <text x="516" y="476" fill="#EEE5D7" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600">threads</text>
+
+    <rect x="616" y="452" width="190" height="38" rx="19" fill="#312C25" stroke="#575044"/>
+    <text x="646" y="476" fill="#EEE5D7" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600">custom providers</text>
+  </g>
+
+  <g>
+    <rect x="820" y="140" width="278" height="98" rx="20" fill="#221F1A" stroke="#4B4438"/>
+    <text x="846" y="174" fill="#B6A58D" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="15" font-weight="700" letter-spacing="0.08em">UI SHELL</text>
+    <text x="846" y="212" fill="#F2E9DB" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="28" font-weight="700">composer, threads, settings</text>
+
+    <rect x="782" y="266" width="354" height="116" rx="24" fill="#28231E" stroke="#5A5144"/>
+    <text x="808" y="302" fill="#B6A58D" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="15" font-weight="700" letter-spacing="0.08em">ROUTING LAYER</text>
+    <text x="808" y="340" fill="#F2E9DB" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="28" font-weight="700">provider adapters + plugins</text>
+    <text x="808" y="370" fill="#BEAF99" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">thin, inspectable server routes</text>
+
+    <rect x="820" y="412" width="84" height="40" rx="20" fill="#EADDC8"/>
+    <text x="844" y="437" fill="#1A1814" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="700">OpenAI</text>
+
+    <rect x="918" y="412" width="114" height="40" rx="20" fill="#D8CDBE"/>
+    <text x="943" y="437" fill="#1A1814" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="700">Anthropic</text>
+
+    <rect x="1046" y="412" width="90" height="40" rx="20" fill="#C6B79F"/>
+    <text x="1071" y="437" fill="#1A1814" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="700">Ollama</text>
+
+    <rect x="862" y="474" width="188" height="40" rx="20" fill="#2F2A24" stroke="#5A5144"/>
+    <text x="900" y="499" fill="#F0E6D8" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="700">custom gateways</text>
+  </g>
+
+  <path d="M958 238V266" stroke="#7E735F" stroke-width="3" stroke-linecap="round"/>
+  <path d="M958 382V412" stroke="#7E735F" stroke-width="3" stroke-linecap="round"/>
+</svg>
