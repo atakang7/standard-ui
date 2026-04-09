@@ -1,15 +1,21 @@
 <p align="center">
-  <img src="./docs/standard-ui-first-look.png" alt="standard-ui interface screenshot" width="1200">
+  <a href="./docs/standard-ui-first-look.png">
+    <img src="./docs/standard-ui-first-look.png" alt="standard-ui first look" width="1100">
+  </a>
+</p>
+
+<p align="center">
+  <sub>Clean chat UI with backend switcher, model picker, and local-first state built in.</sub>
 </p>
 
 <h1 align="center">standard-ui</h1>
 
 <p align="center">
-  <strong>Ship one chat UI across OpenAI-compatible APIs, Anthropic, Ollama, and custom gateways.</strong>
+  <strong>One chat UI for OpenAI-compatible APIs, Anthropic, Ollama, and custom gateways.</strong>
 </p>
 
 <p align="center">
-  A clean, local-first interface for teams that want control over their model stack without rebuilding the frontend for every provider.
+  Small repo. Clear data flow. Easy to fork.
 </p>
 
 <p align="center">
@@ -22,31 +28,20 @@
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> ·
-  <a href="#why-standard-ui">Why standard-ui</a> ·
+  <a href="#standard-interfaces">Standard Interfaces</a> ·
   <a href="#supported-backends">Supported Backends</a> ·
   <a href="#repo-map">Repo Map</a>
 </p>
 
-`standard-ui` is an open source chat UI for real model stacks. It gives you one polished interface across multiple providers, keeps the server layer thin and inspectable, and stays simple enough to fork, audit, and adapt.
+`standard-ui` gives you one chat frontend across different model backends. It keeps the UI clean, the server layer thin, and the repo easy to understand.
 
 ## Why standard-ui
 
-- One UI, many backends.
+- One UI for many backends.
 - Local-first threads, drafts, settings, and uploads.
-- Thin server routes instead of hidden orchestration.
-- Custom gateway support without rewriting the app shell.
+- Thin server routes you can actually read.
+- Custom gateways without rewriting the app.
 - Small enough to understand end to end.
-
-## Highlights
-
-| Capability | What it gives you |
-| --- | --- |
-| Multi-provider chat | OpenAI-compatible APIs, Anthropic, Ollama, and custom gateways |
-| Streaming-first UX | Responses stream into the interface as they arrive |
-| Attachments | Model-aware file support where the backend allows it |
-| Local persistence | Threads, drafts, settings, and appearance preferences stay local |
-| Custom providers | Add provider plugins in `.standard-ui/provider-plugins.json` |
-| Thin backend layer | API routes stay direct, readable, and easy to modify |
 
 ## Quick Start
 
@@ -59,9 +54,9 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-### 2. Configure one backend
+### 2. Add one backend
 
-Create a local `.env` file with only the provider you want to use.
+Create a local `.env` file with only the provider you want.
 
 Ollama:
 
@@ -91,12 +86,12 @@ ANTHROPIC_API_KEY=sk-ant-...
 2. Pick a model.
 3. Send your first prompt.
 
-If no models appear:
+If no models show up:
 
-- make sure the provider is reachable
-- double-check the API key and base URL
-- restart `npm run dev` after updating `.env`
-- for Ollama, confirm the server is running and at least one model is installed
+- make sure the provider is running
+- check the API key and base URL
+- restart `npm run dev` after editing `.env`
+- for Ollama, make sure you have pulled a model
 
 ### Production
 
@@ -105,29 +100,70 @@ npm run build
 npm run start
 ```
 
+## Standard Interfaces
+
+This repo uses a small set of clear interfaces. These are the main ones.
+
+### Provider interfaces
+
+| Backend | Model list | Chat interface |
+| --- | --- | --- |
+| OpenAI-compatible | `GET /models` | `POST /chat/completions` |
+| Anthropic | `GET /models` | `POST /messages` |
+| Ollama | `GET /api/tags` | `POST /api/chat` |
+
+### Custom gateway interface
+
+Custom gateways are defined in `.standard-ui/provider-plugins.json`.
+
+The plugin shape is defined in [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts).
+
+Important fields:
+
+- `baseUrl`: provider root URL
+- `modelsPath`: path used to load models
+- `chatPath`: path used to stream chat
+- `modelsSource`: `remote` or `static`
+- `streamFormat`: `ndjson`, `sse-standard`, or `openai`
+- `headers`: custom request headers
+- `staticModels`: fixed model list when you do not load models remotely
+- `capabilities`: backend setting support
+- `modelCapabilities`: input and attachment support
+
+### Internal TypeScript interfaces
+
+The shared app contracts live in [`lib/types.ts`](./lib/types.ts).
+
+| Interface | Purpose |
+| --- | --- |
+| `BackendOption` | backend shown in the UI |
+| `ModelOption` | model shown in the picker |
+| `BackendsResponse` | response from `/api/backends` |
+| `ModelsResponse` | response from `/api/models` |
+| `RequestMessage` | message sent into the backend layer |
+| `StreamChunk` | normalized streaming event |
+| `ChatThread` | saved local thread |
+| `ChatMessage` | saved local message |
+| `ChatAttachment` | attachment metadata used by the UI |
+| `ChatArtifact` | bundled prompt artifact metadata |
+| `ChatSettings` | shared generation settings |
+
 ## Supported Backends
 
 | Backend | Status | Notes |
 | --- | --- | --- |
-| OpenAI-compatible APIs | Built in | Works with OpenAI-style `/models`, `/chat/completions`, and file upload flows |
-| Anthropic | Built in | Supports direct model loading and chat requests |
-| Ollama | Built in | Supports local model workflows and terminal integration |
-| Custom gateways | Built in | Configure provider plugins locally with base URL, paths, headers, and model metadata |
+| OpenAI-compatible APIs | Built in | Works with OpenAI-style model and chat endpoints |
+| Anthropic | Built in | Works with Anthropic model and messages endpoints |
+| Ollama | Built in | Works with local Ollama model and chat endpoints |
+| Custom gateways | Built in | Works through the local provider plugin interface |
 
 ## Repo Map
 
-- [`app/page.tsx`](./app/page.tsx): main chat shell, local state, drafts, and interaction flow
-- [`app/api/_lib/backends.ts`](./app/api/_lib/backends.ts): provider-specific backend translation
-- [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts): local custom gateway definitions
-- [`components/chat`](./components/chat): chat UI components, settings, and provider-facing UX
-- [`docs/engineering.md`](./docs/engineering.md): engineering guide for contributors
-
-## Principles
-
-- Standards over lock-in.
-- Local-first control.
-- Thin infrastructure.
-- Public-repo-friendly boundaries.
+- [`app/page.tsx`](./app/page.tsx): main chat shell and local state
+- [`app/api/_lib/backends.ts`](./app/api/_lib/backends.ts): backend translation layer
+- [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts): custom gateway contract
+- [`components/chat`](./components/chat): chat UI components
+- [`docs/engineering.md`](./docs/engineering.md): contributor guide
 
 ## Docs
 
