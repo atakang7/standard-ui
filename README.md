@@ -1,11 +1,15 @@
 <p align="center">
-  <img src="./docs/hero.svg" alt="standard-ui banner">
+  <img src="./docs/standard-ui-first-look.png" alt="standard-ui interface screenshot" width="1200">
 </p>
 
 <h1 align="center">standard-ui</h1>
 
 <p align="center">
-  Provider-agnostic chat UI for OpenAI-compatible APIs, Anthropic, Ollama, and custom gateways.
+  <strong>Ship one chat UI across OpenAI-compatible APIs, Anthropic, Ollama, and custom gateways.</strong>
+</p>
+
+<p align="center">
+  A clean, local-first interface for teams that want control over their model stack without rebuilding the frontend for every provider.
 </p>
 
 <p align="center">
@@ -17,46 +21,36 @@
 </p>
 
 <p align="center">
-  Bring your own models. Keep your own routing. Ship one UI.
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#why-standard-ui">Why standard-ui</a> ·
+  <a href="#supported-backends">Supported Backends</a> ·
+  <a href="#repo-map">Repo Map</a>
 </p>
 
-`standard-ui` is a chat UI that works across OpenAI-compatible APIs, Anthropic, Ollama, and custom provider plugins. It keeps the routing layer small and inspectable so teams can adapt it to their own model stack without rebuilding the whole interface.
+`standard-ui` is an open source chat UI for real model stacks. It gives you one polished interface across multiple providers, keeps the server layer thin and inspectable, and stays simple enough to fork, audit, and adapt.
 
-## Why This Exists
+## Why standard-ui
 
-Most chat UIs force an early tradeoff:
+- One UI, many backends.
+- Local-first threads, drafts, settings, and uploads.
+- Thin server routes instead of hidden orchestration.
+- Custom gateway support without rewriting the app shell.
+- Small enough to understand end to end.
 
-- polished UX, but one provider
-- flexible backend, but internal-only tooling
-- lots of features, but lots of framework noise
+## Highlights
 
-`standard-ui` aims to sit in the useful middle:
-
-- one interface across multiple backends
-- small enough to understand end to end
-- practical local-first behavior instead of hidden infrastructure magic
-- flexible enough to fit different deployment setups
-
-## What You Get
-
-| Capability | What it means |
+| Capability | What it gives you |
 | --- | --- |
-| Multi-provider chat | Works with OpenAI-compatible APIs, Anthropic, Ollama, and custom provider plugins |
-| Streaming-first UX | Responses stream into the UI instead of waiting for full completion payloads |
-| Attachments | Handles uploads and model-aware attachment support where the backend allows it |
+| Multi-provider chat | OpenAI-compatible APIs, Anthropic, Ollama, and custom gateways |
+| Streaming-first UX | Responses stream into the interface as they arrive |
+| Attachments | Model-aware file support where the backend allows it |
 | Local persistence | Threads, drafts, settings, and appearance preferences stay local |
-| Custom backends | Add provider plugins in `.standard-ui/provider-plugins.json` without rewriting the app shell |
-| Thin server layer | API routes stay direct and inspectable instead of hiding behavior in a large backend service |
+| Custom providers | Add provider plugins in `.standard-ui/provider-plugins.json` |
+| Thin backend layer | API routes stay direct, readable, and easy to modify |
 
 ## Quick Start
 
-### Requirements
-
-- Node.js 20+
-- npm 10+
-- At least one backend: OpenAI-compatible API, Anthropic, Ollama, or a custom gateway
-
-### Local Setup
+### 1. Install and run
 
 ```bash
 npm install
@@ -65,11 +59,17 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-### Environment Setup
+### 2. Configure one backend
 
-Create a local `.env` file with only the providers you want to enable.
+Create a local `.env` file with only the provider you want to use.
 
-OpenAI-compatible example:
+Ollama:
+
+```dotenv
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+OpenAI-compatible:
 
 ```dotenv
 OPENAI_ENABLED=true
@@ -77,7 +77,7 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_API_KEY=sk-...
 ```
 
-Anthropic example:
+Anthropic:
 
 ```dotenv
 ANTHROPIC_ENABLED=true
@@ -85,13 +85,20 @@ ANTHROPIC_BASE_URL=https://api.anthropic.com/v1
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Ollama example:
+### 3. Start chatting
 
-```dotenv
-OLLAMA_BASE_URL=http://localhost:11434
-```
+1. Choose a backend.
+2. Pick a model.
+3. Send your first prompt.
 
-### Production Build
+If no models appear:
+
+- make sure the provider is reachable
+- double-check the API key and base URL
+- restart `npm run dev` after updating `.env`
+- for Ollama, confirm the server is running and at least one model is installed
+
+### Production
 
 ```bash
 npm run build
@@ -102,52 +109,33 @@ npm run start
 
 | Backend | Status | Notes |
 | --- | --- | --- |
-| OpenAI-compatible APIs | Built in | Works for OpenAI-style `/models`, `/chat/completions`, and file upload flows |
-| Anthropic | Built in | Supports direct Anthropic model loading and chat requests |
-| Ollama | Built in | Local model workflows with model discovery and terminal integration |
+| OpenAI-compatible APIs | Built in | Works with OpenAI-style `/models`, `/chat/completions`, and file upload flows |
+| Anthropic | Built in | Supports direct model loading and chat requests |
+| Ollama | Built in | Supports local model workflows and terminal integration |
 | Custom gateways | Built in | Configure provider plugins locally with base URL, paths, headers, and model metadata |
 
-## Architecture
+## Repo Map
 
-The repo is intentionally simple:
+- [`app/page.tsx`](./app/page.tsx): main chat shell, local state, drafts, and interaction flow
+- [`app/api/_lib/backends.ts`](./app/api/_lib/backends.ts): provider-specific backend translation
+- [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts): local custom gateway definitions
+- [`components/chat`](./components/chat): chat UI components, settings, and provider-facing UX
+- [`docs/engineering.md`](./docs/engineering.md): engineering guide for contributors
 
-1. [`app/page.tsx`](./app/page.tsx) owns the chat app shell, view state, drafts, and interaction flow.
-2. [`app/api/_lib/backends.ts`](./app/api/_lib/backends.ts) translates the UI's request model into provider-specific calls.
-3. [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts) keeps custom gateway definitions local and inspectable.
-4. [`components/chat`](./components/chat) contains the UI: composer, messages, sidebar, settings, and provider-specific details.
+## Principles
 
-## Philosophy
-
-- Standards over lock-in. The UI should adapt to your model stack, not force you into one vendor.
-- Local-first operator control. Runtime state, drafts, uploads, and provider definitions stay under your control.
-- Thin, inspectable infrastructure. You should be able to understand the whole request path without hunting through five services.
-- Keep the repository reusable. Secrets, credentials, and environment-specific tooling should stay out of version control.
+- Standards over lock-in.
+- Local-first control.
+- Thin infrastructure.
+- Public-repo-friendly boundaries.
 
 ## Docs
 
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md): practical contribution rules
-- [`docs/engineering.md`](./docs/engineering.md): codebase map and engineering playbook
-- [`SECURITY.md`](./SECURITY.md): how to report vulnerabilities responsibly
-- [`CHANGELOG.md`](./CHANGELOG.md): release history
-
-## Releases
-
-- GitHub releases are used for versioned project milestones and release notes.
-- `CHANGELOG.md` tracks the human-readable history in-repo.
-
-## Near-Term Focus
-
-- better demo assets and screenshots
-- stronger automated test coverage around provider adapters
-- more polished provider plugin ergonomics
-- import and export flows for threads and local state
-
-## Non-Goals
-
-- publishing private proxy code
-- turning the backend layer into a large framework
-- forcing a hosted control plane just to make the UI usable
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- [`docs/engineering.md`](./docs/engineering.md)
+- [`SECURITY.md`](./SECURITY.md)
+- [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [`LICENSE`](./LICENSE).
