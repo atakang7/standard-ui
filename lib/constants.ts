@@ -22,6 +22,7 @@ export const APPEARANCE_MODE_KEY = "standard_llm_appearance_mode_v1";
 export const STREAM_READABILITY_PACE_KEY = "standard_llm_stream_readability_pace_v1";
 export const LEGACY_OLLAMA_THREADS_KEY = "standard_ollama_threads_v1";
 export const LEGACY_OLLAMA_SELECTED_MODEL_KEY = "standard_ollama_selected_model_v1";
+export const THREADS_BACKUP_KEY = "standard_llm_threads_backup_v1";
 
 export const DEFAULT_APPEARANCE_MODE: AppearanceMode = "light";
 export const DEFAULT_STREAM_READABILITY_PACE = 0.985;

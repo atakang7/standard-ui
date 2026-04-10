@@ -48,6 +48,7 @@ import {
   SELECTED_MODELS_KEY,
   SELECTED_THREAD_KEY,
   SETTINGS_BY_BACKEND_KEY,
+  THREADS_BACKUP_KEY,
   THREADS_KEY,
   UPLOAD_MAX_FILES_PER_BATCH,
   UPLOAD_MAX_TOTAL_BATCH_BYTES,
@@ -83,6 +84,77 @@ import {
 import { streamAssistantResponse } from "../lib/stream-chat";
 
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+function countThreadMessages(threads: ChatThread[]) {
+  return threads.reduce((count, thread) => count + thread.messages.length, 0);
+}
+
+function normalizeStoredThreads(raw: string | null) {
+  if (!raw) return { valid: false, threads: [] as ChatThread[] };
+
+  try {
+    const parsed = JSON.parse(raw) as ChatThread[];
+    if (!Array.isArray(parsed)) {
+      return { valid: false, threads: [] as ChatThread[] };
+    }
+
+    return {
+      valid: true,
+      threads: parsed
+        .filter((thread) => thread && typeof thread.id === "string" && Array.isArray(thread.messages))
+        .map((thread) => ({
+          id: thread.id,
+          title: typeof thread.title === "string" && thread.title ? thread.title : "New chat",
+          createdAt:
+            typeof thread.createdAt === "number" && Number.isFinite(thread.createdAt)
+              ? thread.createdAt
+              : Date.now(),
+          updatedAt:
+            typeof thread.updatedAt === "number" && Number.isFinite(thread.updatedAt)
+              ? thread.updatedAt
+              : Date.now(),
+          backend:
+            typeof thread.backend === "string" && thread.backend
+              ? thread.backend
+              : typeof thread.model === "string" && thread.model
+                ? "ollama"
+                : "",
+          model: typeof thread.model === "string" ? thread.model : "",
+          messages: thread.messages
+            .filter(
+              (message) =>
+                message &&
+                (message.role === "user" || message.role === "assistant") &&
+                typeof message.content === "string"
+            )
+            .map((message) => ({
+              id: typeof message.id === "string" ? message.id : createId(),
+              role: message.role,
+              content: message.content,
+              modelContent:
+                typeof (message as { modelContent?: unknown }).modelContent === "string" &&
+                (message as { modelContent?: string }).modelContent?.trim()
+                  ? (message as { modelContent?: string }).modelContent
+                  : undefined,
+              reasoning:
+                typeof (message as { reasoning?: unknown }).reasoning === "string" &&
+                (message as { reasoning?: string }).reasoning?.trim()
+                  ? (message as { reasoning?: string }).reasoning
+                  : undefined,
+              artifacts: normalizeArtifacts((message as { artifacts?: unknown }).artifacts),
+              attachments: normalizeAttachments((message as { attachments?: unknown }).attachments),
+              createdAt:
+                typeof message.createdAt === "number" && Number.isFinite(message.createdAt)
+                  ? message.createdAt
+                  : Date.now(),
+              metrics: normalizeMessageMetrics((message as { metrics?: unknown }).metrics),
+            })),
+        })),
+    };
+  } catch {
+    return { valid: false, threads: [] as ChatThread[] };
+  }
+}
 
 export default function Page() {
   const [threads, setThreads] = useState<ChatThread[]>([]);
@@ -561,69 +633,26 @@ export default function Page() {
 
   useEffect(() => {
     try {
-      const rawThreads =
-        localStorage.getItem(THREADS_KEY) || localStorage.getItem(LEGACY_OLLAMA_THREADS_KEY);
+      const rawThreads = localStorage.getItem(THREADS_KEY);
+      const rawThreadBackup = localStorage.getItem(THREADS_BACKUP_KEY);
+      const rawLegacyThreads = localStorage.getItem(LEGACY_OLLAMA_THREADS_KEY);
       const rawSelectedId = localStorage.getItem(SELECTED_THREAD_KEY);
       const rawSettings = localStorage.getItem(SETTINGS_BY_BACKEND_KEY);
       const rawDrafts = localStorage.getItem(DRAFTS_BY_THREAD_KEY);
       const rawAttachmentDrafts = localStorage.getItem(ATTACHMENT_DRAFTS_BY_THREAD_KEY);
+      const primaryThreads = normalizeStoredThreads(rawThreads);
+      const backupThreads = normalizeStoredThreads(rawThreadBackup);
+      const legacyThreads = normalizeStoredThreads(rawLegacyThreads);
 
-      let nextThreads: ChatThread[] = [];
-
-      if (rawThreads) {
-        const parsed = JSON.parse(rawThreads) as ChatThread[];
-        if (Array.isArray(parsed)) {
-          nextThreads = parsed
-            .filter((thread) => thread && typeof thread.id === "string" && Array.isArray(thread.messages))
-            .map((thread) => ({
-              id: thread.id,
-              title: typeof thread.title === "string" && thread.title ? thread.title : "New chat",
-              createdAt:
-                typeof thread.createdAt === "number" && Number.isFinite(thread.createdAt)
-                  ? thread.createdAt
-                  : Date.now(),
-              updatedAt:
-                typeof thread.updatedAt === "number" && Number.isFinite(thread.updatedAt)
-                  ? thread.updatedAt
-                  : Date.now(),
-              backend:
-                typeof thread.backend === "string" && thread.backend
-                  ? thread.backend
-                  : typeof thread.model === "string" && thread.model
-                    ? "ollama"
-                    : "",
-              model: typeof thread.model === "string" ? thread.model : "",
-              messages: thread.messages
-                .filter(
-                  (message) =>
-                    message &&
-                    (message.role === "user" || message.role === "assistant") &&
-                    typeof message.content === "string"
-                )
-                .map((message) => ({
-                  id: typeof message.id === "string" ? message.id : createId(),
-                  role: message.role,
-                  content: message.content,
-                  modelContent:
-                    typeof (message as { modelContent?: unknown }).modelContent === "string" &&
-                    (message as { modelContent?: string }).modelContent?.trim()
-                      ? (message as { modelContent?: string }).modelContent
-                      : undefined,
-                  reasoning:
-                    typeof (message as { reasoning?: unknown }).reasoning === "string" &&
-                    (message as { reasoning?: string }).reasoning?.trim()
-                      ? (message as { reasoning?: string }).reasoning
-                      : undefined,
-                  artifacts: normalizeArtifacts((message as { artifacts?: unknown }).artifacts),
-                  attachments: normalizeAttachments((message as { attachments?: unknown }).attachments),
-                  createdAt:
-                    typeof message.createdAt === "number" && Number.isFinite(message.createdAt)
-                      ? message.createdAt
-                      : Date.now(),
-                  metrics: normalizeMessageMetrics((message as { metrics?: unknown }).metrics),
-                })),
-            }));
-        }
+      let nextThreads = primaryThreads.threads;
+      if (!nextThreads.length && rawThreads && !primaryThreads.valid) {
+        nextThreads = backupThreads.threads;
+      }
+      if (!nextThreads.length) {
+        nextThreads = legacyThreads.threads;
+      }
+      if (!nextThreads.length && !rawThreads) {
+        nextThreads = backupThreads.threads;
       }
 
       if (!nextThreads.length) {
@@ -655,12 +684,34 @@ export default function Page() {
   // ── Storage persistence ────────────────────────────────────────────
 
   useEffect(() => {
-    if (!threads.length) return;
+    if (!isStorageHydrated || !threads.length) return;
     const timerId = window.setTimeout(() => {
-      localStorage.setItem(THREADS_KEY, JSON.stringify(threads));
+      try {
+        const previousRaw = localStorage.getItem(THREADS_KEY);
+        const previousThreads = normalizeStoredThreads(previousRaw).threads;
+        const previousMessageCount = countThreadMessages(previousThreads);
+        const nextMessageCount = countThreadMessages(threads);
+
+        if (streamingThreadId && previousMessageCount > nextMessageCount) {
+          console.warn("[standard-ui] skipped shrinking thread persistence during active stream", {
+            previousMessageCount,
+            nextMessageCount,
+            streamingThreadId,
+          });
+          return;
+        }
+
+        const nextRaw = JSON.stringify(threads);
+        if (previousRaw && previousRaw !== nextRaw) {
+          localStorage.setItem(THREADS_BACKUP_KEY, previousRaw);
+        }
+        localStorage.setItem(THREADS_KEY, nextRaw);
+      } catch (error) {
+        console.warn("[standard-ui] failed to persist threads", error);
+      }
     }, 220);
     return () => window.clearTimeout(timerId);
-  }, [threads]);
+  }, [threads, isStorageHydrated, streamingThreadId]);
 
   useEffect(() => {
     if (!selectedThreadId) return;
