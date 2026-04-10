@@ -11,6 +11,8 @@ This is the short version of how to work on `standard-ui` without turning it int
 - `public/fonts/*`: UI fonts used by the frontend
 - `.standard-ui/`: local runtime state for provider plugins and uploads, intentionally not committed
 
+For the frontend state cleanup plan, see [`frontend-state.md`](./frontend-state.md).
+
 ## Engineering Principles
 
 - Provider-agnostic first. Favor common interfaces and capability flags over provider-specific branching in the UI.
