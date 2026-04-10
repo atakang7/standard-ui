@@ -5,6 +5,15 @@ import {
   streamChatFromBackend,
 } from "../_lib/backends";
 import type { ChatSettings, InputAttachment } from "../_lib/backends";
+import {
+  DEFAULT_CHAT_SETTINGS,
+  LEGACY_DEFAULT_CONTEXT_WINDOW,
+  REQUEST_HARD_CHAR_LIMIT,
+  REQUEST_MAX_MESSAGES,
+  REQUEST_MAX_SINGLE_MESSAGE_CHARS,
+  REQUEST_MESSAGE_TOKEN_OVERHEAD,
+  REQUEST_MIN_PROMPT_BUDGET_TOKENS,
+} from "../../../lib/constants";
 
 type InputMessage = {
   role: "user" | "assistant";
@@ -23,12 +32,6 @@ type RequestBody = {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const REQUEST_MAX_MESSAGES = 80;
-const REQUEST_MIN_PROMPT_BUDGET_TOKENS = 384;
-const REQUEST_HARD_CHAR_LIMIT = 220_000;
-const REQUEST_MAX_SINGLE_MESSAGE_CHARS = 24_000;
-const REQUEST_MESSAGE_TOKEN_OVERHEAD = 8;
-
 function estimateTokensFromText(text: string) {
   const normalized = text.trim();
   if (!normalized) return 0;
@@ -39,6 +42,16 @@ function clipToTail(text: string, maxChars: number) {
   if (maxChars <= 0) return "";
   if (text.length <= maxChars) return text;
   return text.slice(-maxChars);
+}
+
+function normalizeContextWindow(value: unknown) {
+  const normalized = Math.max(
+    256,
+    Math.round(Number(value || DEFAULT_CHAT_SETTINGS.contextWindow))
+  );
+  return normalized === LEGACY_DEFAULT_CONTEXT_WINDOW
+    ? DEFAULT_CHAT_SETTINGS.contextWindow
+    : normalized;
 }
 
 function boundMessagesForRequest(messages: InputMessage[], settings?: ChatSettings) {
@@ -52,8 +65,8 @@ function boundMessagesForRequest(messages: InputMessage[], settings?: ChatSettin
 
   if (!normalizedMessages.length) return [];
 
-  const contextWindow = Math.max(256, Math.round(Number(settings?.contextWindow || 4096)));
-  const maxTokens = Math.max(1, Math.round(Number(settings?.maxTokens || 1024)));
+  const contextWindow = normalizeContextWindow(settings?.contextWindow);
+  const maxTokens = Math.max(1, Math.round(Number(settings?.maxTokens || DEFAULT_CHAT_SETTINGS.maxTokens)));
   const completionReserve = Math.max(256, Math.min(maxTokens, Math.floor(contextWindow * 0.45)));
   const promptTokenBudget = Math.max(
     REQUEST_MIN_PROMPT_BUDGET_TOKENS,

@@ -1,5 +1,11 @@
 import type { ChatMessageMetrics, ChatSettings, ChatThread, RequestMessage, StreamChunk } from "./types";
-import { STREAM_FLUSH_INTERVAL_MS } from "./constants";
+import {
+  CHAT_PAYLOAD_DEBUG_STORAGE_KEY,
+  REQUEST_HARD_CHAR_LIMIT,
+  REQUEST_MAX_MESSAGES,
+  REQUEST_MAX_SINGLE_MESSAGE_CHARS,
+  STREAM_FLUSH_INTERVAL_MS,
+} from "./constants";
 import { buildBoundedRequestMessages, estimateTokensFromText } from "./utils";
 
 export type StreamChatOptions = {
@@ -45,6 +51,66 @@ function patchAssistantMessage(
   return applyAtIndex(matchIndex);
 }
 
+function shouldLogFullChatPayload() {
+  try {
+    return window.localStorage.getItem(CHAT_PAYLOAD_DEBUG_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function countMessageChars(messages: RequestMessage[]) {
+  return messages.reduce((total, message) => total + message.content.length, 0);
+}
+
+function logChatRequestPayload(options: {
+  threadId: string;
+  sessionKey?: string;
+  selectedBackend: string;
+  selectedModel: string;
+  settings: ChatSettings;
+  requestMessages: RequestMessage[];
+  effectiveRequestMessages: RequestMessage[];
+}) {
+  const {
+    threadId,
+    sessionKey,
+    selectedBackend,
+    selectedModel,
+    settings,
+    requestMessages,
+    effectiveRequestMessages,
+  } = options;
+  const fullPayloadEnabled = shouldLogFullChatPayload();
+  const sentChars = countMessageChars(effectiveRequestMessages);
+
+  console.info("[standard-ui] /api/chat payload summary", {
+    backend: selectedBackend,
+    model: selectedModel,
+    sessionKey: sessionKey || threadId,
+    requestedMessages: requestMessages.length,
+    sentMessages: effectiveRequestMessages.length,
+    droppedFromStart: Math.max(0, requestMessages.length - effectiveRequestMessages.length),
+    sentChars,
+    estimatedPromptTokens: estimateTokensFromText(
+      effectiveRequestMessages.map((message) => message.content).join("\n")
+    ),
+    contextWindow: settings.contextWindow,
+    maxTokens: settings.maxTokens,
+    caps: {
+      maxMessages: REQUEST_MAX_MESSAGES,
+      maxSingleMessageChars: REQUEST_MAX_SINGLE_MESSAGE_CHARS,
+      hardCharLimit: REQUEST_HARD_CHAR_LIMIT,
+    },
+    fullPayloadLogging: fullPayloadEnabled,
+    enableFullPayloadLogging: `localStorage.setItem("${CHAT_PAYLOAD_DEBUG_STORAGE_KEY}", "1")`,
+  });
+
+  if (fullPayloadEnabled) {
+    console.info("[standard-ui] /api/chat payload messages", effectiveRequestMessages);
+  }
+}
+
 export async function streamAssistantResponse(options: StreamChatOptions) {
   const {
     threadId,
@@ -71,6 +137,16 @@ export async function streamAssistantResponse(options: StreamChatOptions) {
           attachments: Array.isArray(message.attachments) ? message.attachments : [],
         }))
         .filter((message) => message.content.length > 0 || message.attachments.length > 0);
+
+  logChatRequestPayload({
+    threadId,
+    sessionKey,
+    selectedBackend,
+    selectedModel,
+    settings,
+    requestMessages,
+    effectiveRequestMessages,
+  });
 
   let receivedChunk = false;
   let pendingChunk = "";

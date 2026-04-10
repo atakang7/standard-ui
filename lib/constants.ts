@@ -1,11 +1,13 @@
 import type { BackendCapabilities, ChatSettings, ModelCapabilities, AppearanceMode } from "./types";
 
 export const STREAM_FLUSH_INTERVAL_MS = 48;
-export const REQUEST_MAX_MESSAGES = 80;
+export const REQUEST_MAX_MESSAGES = 240;
 export const REQUEST_MIN_PROMPT_BUDGET_TOKENS = 384;
-export const REQUEST_HARD_CHAR_LIMIT = 220_000;
-export const REQUEST_MAX_SINGLE_MESSAGE_CHARS = 24_000;
+export const REQUEST_HARD_CHAR_LIMIT = 500_000;
+export const REQUEST_MAX_SINGLE_MESSAGE_CHARS = 60_000;
 export const REQUEST_MESSAGE_TOKEN_OVERHEAD = 8;
+export const CHAT_PAYLOAD_DEBUG_STORAGE_KEY = "standard_llm_debug_chat_payload_v1";
+export const LEGACY_DEFAULT_CONTEXT_WINDOW = 4096;
 export const UPLOAD_MAX_FILES_PER_BATCH = 10;
 export const UPLOAD_MAX_TOTAL_BATCH_BYTES = 40 * 1024 * 1024;
 
@@ -60,7 +62,7 @@ export const DEFAULT_CHAT_SETTINGS: ChatSettings = {
   stopSequences: "",
   seed: "",
   jsonMode: false,
-  contextWindow: 4096,
+  contextWindow: 16384,
   repeatPenalty: 1.1,
   keepAlive: "5m",
 };
