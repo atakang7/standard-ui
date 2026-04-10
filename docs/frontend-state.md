@@ -2,6 +2,18 @@
 
 This document is intentionally practical. The goal is not to do a clever rewrite. The goal is to make the chat flow reliable, make state ownership obvious, and make future bugs easier to isolate.
 
+## North Star
+
+The product should feel like a long white lab corridor: clean, quiet, structured, and inevitable. Everything should look and behave as if it belongs exactly where it is.
+
+For frontend engineering, that means:
+
+- One clear path through the app. A message should travel from composer, to thread state, to bounded request, to stream patching, to persistence without hidden detours.
+- No exposed wiring. Persistence, request bounding, model loading, and streaming internals should sit behind named hooks and helpers, not leak into presentational components.
+- Clean surfaces with strict ownership. A component should own its own local UI behavior, but not own app history, provider selection, or persistence.
+- Predictable recovery. If storage, streaming, or model loading fails, the app should preserve user work and degrade to a known state instead of silently replacing history.
+- Calm defaults. Prefer simple, explicit state transitions over clever abstractions. If a future engineer has to guess where state lives, the design has failed.
+
 ## Current Problems
 
 - `app/page.tsx` owns too many responsibilities: thread state, persistence, provider/model loading, streaming, drafts, uploads, settings, keyboard shortcuts, mobile sidebar state, and boot behavior all live in one component.
