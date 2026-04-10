@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 
 export const metadata = {
-  title: "standard-ui",
-  description: "Provider-agnostic chat UI for OpenAI-compatible APIs, Anthropic, Ollama, and custom gateways",
+  title: "OAI",
+  description: "Open-source, provider-agnostic OAI interface",
 };
 
 const APPEARANCE_MODE_KEY = "standard_llm_appearance_mode_v1";

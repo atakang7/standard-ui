@@ -115,7 +115,7 @@ export const ChatSidebar = memo(function ChatSidebar({
     <aside className={className} aria-label="Conversation sidebar">
       <nav className="px-2 py-2" aria-label="Primary">
         <div className="mb-1.5 flex items-center justify-between px-1">
-          <span className={brandClass}>standard-ui</span>
+          <span className={brandClass}>OAI</span>
           <button
             type="button"
             className={collapseButtonClass}

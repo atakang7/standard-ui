@@ -186,10 +186,11 @@ const DEFAULT_SETTINGS: Required<ChatSettings> = {
   stopSequences: "",
   seed: "",
   jsonMode: false,
-  contextWindow: 4096,
+  contextWindow: 16384,
   repeatPenalty: 1.1,
   keepAlive: "5m",
 };
+const LEGACY_DEFAULT_CONTEXT_WINDOW = 4096;
 
 const DEFAULT_MODEL_CAPABILITIES: ModelCapabilities = {
   textInput: true,
@@ -1447,6 +1448,10 @@ async function buildAnthropicMessageContent(
 
 function normalizeSettings(settings?: ChatSettings): Required<ChatSettings> {
   const merged = { ...DEFAULT_SETTINGS, ...(settings ?? {}) };
+  const normalizedContextWindow = Math.max(
+    256,
+    Math.round(Number(merged.contextWindow ?? DEFAULT_SETTINGS.contextWindow))
+  );
 
   return {
     systemPrompt: merged.systemPrompt,
@@ -1457,7 +1462,10 @@ function normalizeSettings(settings?: ChatSettings): Required<ChatSettings> {
     stopSequences: merged.stopSequences,
     seed: merged.seed,
     jsonMode: Boolean(merged.jsonMode),
-    contextWindow: Math.max(256, Math.round(Number(merged.contextWindow ?? DEFAULT_SETTINGS.contextWindow))),
+    contextWindow:
+      normalizedContextWindow === LEGACY_DEFAULT_CONTEXT_WINDOW
+        ? DEFAULT_SETTINGS.contextWindow
+        : normalizedContextWindow,
     repeatPenalty: clampNumber(Number(merged.repeatPenalty ?? DEFAULT_SETTINGS.repeatPenalty), 0.5, 2),
     keepAlive: merged.keepAlive.trim() || DEFAULT_SETTINGS.keepAlive,
   };

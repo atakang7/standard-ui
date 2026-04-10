@@ -13,6 +13,7 @@ import type {
 } from "./types";
 import {
   DEFAULT_CHAT_SETTINGS,
+  LEGACY_DEFAULT_CONTEXT_WINDOW,
   DEFAULT_MODEL_CAPABILITIES,
   REQUEST_HARD_CHAR_LIMIT,
   REQUEST_MAX_MESSAGES,
@@ -194,10 +195,20 @@ export function buildBoundedRequestMessages(messages: RequestMessage[], settings
 
   if (!normalizedMessages.length) return [];
 
-  const contextWindow = Math.max(256, Math.round(Number(settings.contextWindow || 4096)));
+  const normalizedContextWindow = Math.max(
+    256,
+    Math.round(Number(settings.contextWindow || DEFAULT_CHAT_SETTINGS.contextWindow))
+  );
+  const contextWindow =
+    normalizedContextWindow === LEGACY_DEFAULT_CONTEXT_WINDOW
+      ? DEFAULT_CHAT_SETTINGS.contextWindow
+      : normalizedContextWindow;
   const completionReserve = Math.max(
     256,
-    Math.min(Math.round(Number(settings.maxTokens || 1024)), Math.floor(contextWindow * 0.45))
+    Math.min(
+      Math.round(Number(settings.maxTokens || DEFAULT_CHAT_SETTINGS.maxTokens)),
+      Math.floor(contextWindow * 0.45)
+    )
   );
   const promptTokenBudget = Math.max(REQUEST_MIN_PROMPT_BUDGET_TOKENS, contextWindow - completionReserve);
 
@@ -444,6 +455,10 @@ export function normalizeMessageMetrics(candidate: unknown): ChatMessageMetrics 
 
 export function normalizeChatSettings(candidate?: Partial<ChatSettings>): ChatSettings {
   const merged = { ...DEFAULT_CHAT_SETTINGS, ...(candidate ?? {}) };
+  const normalizedContextWindow = Math.max(
+    256,
+    Math.round(Number(merged.contextWindow ?? DEFAULT_CHAT_SETTINGS.contextWindow))
+  );
   return {
     systemPrompt: merged.systemPrompt ?? "",
     temperature: clamp(Number(merged.temperature ?? DEFAULT_CHAT_SETTINGS.temperature), 0, 2),
@@ -453,7 +468,10 @@ export function normalizeChatSettings(candidate?: Partial<ChatSettings>): ChatSe
     stopSequences: merged.stopSequences ?? "",
     seed: merged.seed ?? "",
     jsonMode: Boolean(merged.jsonMode),
-    contextWindow: Math.max(256, Math.round(Number(merged.contextWindow ?? DEFAULT_CHAT_SETTINGS.contextWindow))),
+    contextWindow:
+      normalizedContextWindow === LEGACY_DEFAULT_CONTEXT_WINDOW
+        ? DEFAULT_CHAT_SETTINGS.contextWindow
+        : normalizedContextWindow,
     repeatPenalty: clamp(Number(merged.repeatPenalty ?? DEFAULT_CHAT_SETTINGS.repeatPenalty), 0.5, 2),
     keepAlive: (merged.keepAlive ?? "").trim() || DEFAULT_CHAT_SETTINGS.keepAlive,
   };

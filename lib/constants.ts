@@ -1,11 +1,13 @@
 import type { BackendCapabilities, ChatSettings, ModelCapabilities, AppearanceMode } from "./types";
 
 export const STREAM_FLUSH_INTERVAL_MS = 48;
-export const REQUEST_MAX_MESSAGES = 80;
+export const REQUEST_MAX_MESSAGES = 240;
 export const REQUEST_MIN_PROMPT_BUDGET_TOKENS = 384;
-export const REQUEST_HARD_CHAR_LIMIT = 220_000;
-export const REQUEST_MAX_SINGLE_MESSAGE_CHARS = 24_000;
+export const REQUEST_HARD_CHAR_LIMIT = 500_000;
+export const REQUEST_MAX_SINGLE_MESSAGE_CHARS = 60_000;
 export const REQUEST_MESSAGE_TOKEN_OVERHEAD = 8;
+export const CHAT_PAYLOAD_DEBUG_STORAGE_KEY = "standard_llm_debug_chat_payload_v1";
+export const LEGACY_DEFAULT_CONTEXT_WINDOW = 4096;
 export const UPLOAD_MAX_FILES_PER_BATCH = 10;
 export const UPLOAD_MAX_TOTAL_BATCH_BYTES = 40 * 1024 * 1024;
 
@@ -20,6 +22,7 @@ export const APPEARANCE_MODE_KEY = "standard_llm_appearance_mode_v1";
 export const STREAM_READABILITY_PACE_KEY = "standard_llm_stream_readability_pace_v1";
 export const LEGACY_OLLAMA_THREADS_KEY = "standard_ollama_threads_v1";
 export const LEGACY_OLLAMA_SELECTED_MODEL_KEY = "standard_ollama_selected_model_v1";
+export const THREADS_BACKUP_KEY = "standard_llm_threads_backup_v1";
 
 export const DEFAULT_APPEARANCE_MODE: AppearanceMode = "light";
 export const DEFAULT_STREAM_READABILITY_PACE = 0.985;
@@ -60,7 +63,7 @@ export const DEFAULT_CHAT_SETTINGS: ChatSettings = {
   stopSequences: "",
   seed: "",
   jsonMode: false,
-  contextWindow: 4096,
+  contextWindow: 16384,
   repeatPenalty: 1.1,
   keepAlive: "5m",
 };

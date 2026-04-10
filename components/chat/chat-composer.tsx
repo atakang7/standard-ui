@@ -214,7 +214,7 @@ function ChatComposerImpl({
     theme.composer.card +
     (isDragOver
       ? isDark
-        ? " ring-2 ring-[#8cb9ff] ring-offset-2 ring-offset-[#262624]"
+        ? " ring-2 ring-[#8cb9ff] ring-offset-2 ring-offset-[#1F1F1E]"
         : " ring-2 ring-[#2f7de1] ring-offset-2 ring-offset-[#faf9f5]"
       : "");
   const promptArtifactDockClass = isDark
