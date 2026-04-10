@@ -112,10 +112,10 @@ export const claudeDarkTheme: ProviderTheme = {
   providerLabel: "Claude",
   isDark: true,
   layout: {
-    main: "relative h-dvh w-full overflow-hidden bg-[#262624] text-[#f3efe7]",
+    main: "relative h-dvh w-full overflow-hidden bg-[#1F1F1E] text-[#f3efe7]",
     sidebarShell:
-      "border-r border-[#3a3934] bg-[#242421] text-[#f1ede4] shadow-[0_8px_24px_rgba(0,0,0,0.34)] md:shadow-none",
-    content: "bg-[#262624]",
+      "border-r border-[#3a3934] bg-[#1F1F1E] text-[#f1ede4] shadow-[0_8px_24px_rgba(0,0,0,0.34)] md:shadow-none",
+    content: "bg-[#1F1F1E]",
     overlay: "bg-black/55",
     errorText: "text-[#f1b08c]",
     emptySection: "flex min-h-0 flex-1 flex-col justify-center gap-6 pb-4 pt-8 sm:pt-10",
@@ -123,21 +123,21 @@ export const claudeDarkTheme: ProviderTheme = {
   },
   topbar: {
     header:
-      "flex h-12 items-center gap-2 border-b border-[#34332f] bg-[#262624] px-2.5 md:px-3",
+      "flex h-12 items-center gap-2 border-b border-[#34332f] bg-[#1F1F1E] px-2.5 md:px-3",
     iconButton:
       "inline-flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-[#d3ccbf] transition hover:bg-[#32312d]",
     title: "truncate text-sm font-medium tracking-tight text-[#c9c2b6]",
     providerBadge:
-      "hidden items-center rounded-full border border-[#4a4841] bg-[#262624] px-2 py-0.5 text-[11px] font-medium text-[#cbc4b8] sm:inline-flex",
+      "hidden items-center rounded-full border border-[#4a4841] bg-[#1F1F1E] px-2 py-0.5 text-[11px] font-medium text-[#cbc4b8] sm:inline-flex",
   },
   sidebar: {
     newChatButton:
-      "flex w-full items-center gap-2 rounded-lg bg-[#262624] px-2.5 py-1.5 text-[13px] font-medium text-[#f0ece3] transition hover:bg-[#2f2e29]",
+      "flex w-full items-center gap-2 rounded-lg bg-[#1F1F1E] px-2.5 py-1.5 text-[13px] font-medium text-[#f0ece3] transition hover:bg-[#2f2e29]",
     recentsLabel: "px-2.5 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9f988b]",
     emptyText: "px-2 text-xs text-[#948d80]",
     threadButtonActive: "bg-[#2f2e2a] text-[#f3efe7]",
     threadButtonIdle: "text-[#b9b2a5] hover:bg-[#2f2e29]",
-    renameForm: "rounded-lg bg-[#262624] p-0.5",
+    renameForm: "rounded-lg bg-[#1F1F1E] p-0.5",
     renameInput:
       "h-8 w-full rounded-md border-0 bg-[#1f1f1d] px-2 text-sm text-[#f1ede4] outline-none focus:bg-[#232320]",
     deleteButton:
@@ -150,7 +150,7 @@ export const claudeDarkTheme: ProviderTheme = {
   },
   composer: {
     formLanding: "w-full px-4 pb-10 sm:px-6",
-    formDocked: "bg-gradient-to-t from-[#262624] via-[#262624]/84 to-transparent px-4 pb-4 pt-2 sm:px-6",
+    formDocked: "bg-gradient-to-t from-[#1F1F1E] via-[#1F1F1E]/84 to-transparent px-4 pb-4 pt-2 sm:px-6",
     card:
       "mx-auto w-full max-w-[var(--standard-flow-width)] rounded-[1.6rem] border border-[#3c3b36] bg-[#2f2f2d] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_22px_rgba(0,0,0,0.24)]",
     textarea:
@@ -173,7 +173,7 @@ export const claudeDarkTheme: ProviderTheme = {
     metaRow:
       "mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 px-0.5 pt-0 text-[11px] text-[#c8c1b5]",
     settingsPanel:
-      "mx-auto mt-2 w-full max-w-4xl rounded-2xl bg-[#262624]/82 px-3 py-3 shadow-[0_1px_0_rgba(0,0,0,0.35)]",
+      "mx-auto mt-2 w-full max-w-4xl rounded-2xl bg-[#1F1F1E]/82 px-3 py-3 shadow-[0_1px_0_rgba(0,0,0,0.35)]",
     settingsTitle: "text-[11px] font-semibold uppercase tracking-[0.08em] text-[#a7a092]",
     settingsLabel: "block text-xs font-medium text-[#cbc4b8]",
     settingsInput:

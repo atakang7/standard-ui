@@ -48,9 +48,9 @@
 }
 
 html[data-color-mode="dark"] {
-  --fast-surface-bg: #262624;
+  --fast-surface-bg: #1F1F1E;
   --fast-surface-text: #e9e6df;
-  --fast-composer-bg: #262624;
+  --fast-composer-bg: #1F1F1E;
   --fast-composer-border: #4a4841;
   --fast-composer-divider: #34332f;
   --fast-composer-placeholder: #918a7d;
