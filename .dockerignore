@@ -1,23 +1,18 @@
-node_modules
+.git
+.github
 .next
 .standard-ui
-
-# local env files
-.env*
-!.env.example
-
-# local runtime output
-nohup.out
+node_modules
+npm-debug.log*
 *.log
 *.pid
 *.pid.manual
 tsconfig.tsbuildinfo
-
-# private proxy helpers
+.env
+.env.*
+!.env.example
 outlier-auth-pipeline.mjs
 outlier-load-auth.sh
 outlier-proxy.mjs
 outlier-up.sh
-
-# misc
-.DS_Store
+docs/standard-ui-first-look.png

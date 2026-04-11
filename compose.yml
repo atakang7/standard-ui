@@ -1,0 +1,22 @@
+services:
+  standard-ui:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      OLLAMA_ENABLED: ${OLLAMA_ENABLED:-true}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OPENAI_ENABLED: ${OPENAI_ENABLED:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_ENABLED: ${ANTHROPIC_ENABLED:-}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      MODEL_CAPABILITY_PROBE: ${MODEL_CAPABILITY_PROBE:-}
+    volumes:
+      - standard_ui_data:/app/.standard-ui
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  standard_ui_data:

@@ -72,6 +72,11 @@ export type ChatThread = {
   messages: ChatMessage[];
 };
 
+export type ThreadPatchOptions = {
+  allowMessageShrink?: boolean;
+  reason?: string;
+};
+
 // ─── Backend & model config ───────────────────────────────────────────────────
 
 export type BackendCapabilities = {

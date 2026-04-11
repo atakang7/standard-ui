@@ -3,8 +3,11 @@
   "private": true,
   "version": "0.1.1",
   "scripts": {
+    "setup": "npm install && npm run dev",
     "dev": "next dev",
     "build": "next build",
+    "prod": "npm run build && npm run start",
+    "docker": "docker compose up --build",
     "start": "next start",
     "lint": "next lint"
   },
