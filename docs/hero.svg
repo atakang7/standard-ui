@@ -98,11 +98,11 @@
     <rect x="616" y="152" width="330" height="344" rx="28" fill="#FFFFFF" stroke="#D6D0C3"/>
     <rect x="646" y="184" width="78" height="26" rx="13" fill="#1F1F1E"/>
     <text x="664" y="202" fill="#F8F6F0" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" font-weight="700">OSS</text>
-    <text x="646" y="254" fill="#1F1F1E" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="44" font-weight="800" letter-spacing="-0.045em">clean</text>
+    <text x="646" y="254" fill="#1F1F1E" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="44" font-weight="800" letter-spacing="-0.045em">state</text>
     <text x="646" y="304" fill="#1F1F1E" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="44" font-weight="800" letter-spacing="-0.045em">by contract</text>
     <rect x="646" y="338" width="240" height="1.5" fill="#DDD7CA"/>
-    <text x="646" y="377" fill="#615D54" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">Provider-agnostic chat UI</text>
-    <text x="646" y="407" fill="#615D54" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">with local-first sessions</text>
+    <text x="646" y="377" fill="#615D54" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">Provider boundaries at the edge</text>
+    <text x="646" y="407" fill="#615D54" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">session history in the client</text>
     <g>
       <rect x="646" y="438" width="86" height="28" rx="14" fill="#F3F0E8" stroke="#DDD7CA"/>
       <text x="668" y="457" fill="#1F1F1E" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12" font-weight="700">OpenAI</text>

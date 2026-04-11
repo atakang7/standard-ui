@@ -7,7 +7,7 @@
 <h1 align="center">standard-ui</h1>
 
 <p align="center">
-  <strong>One interface for local and hosted model backends. Session-owned history. Local-first state.</strong>
+  <strong>Provider adapters at the edge. Session-owned history in the client. Local runtime state by default.</strong>
 </p>
 
 <p align="center">
@@ -22,17 +22,17 @@
 </p>
 
 <p align="center">
-  <a href="#start">Start</a> ·
-  <a href="#configure">Configure</a> ·
-  <a href="#contracts">Contracts</a> ·
+  <a href="#runtime">Runtime</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#project-contracts">Contracts</a> ·
   <a href="#docs">Docs</a>
 </p>
 
-`standard-ui` gives one interface to local and hosted model backends. It keeps provider differences at the API boundary and treats saved chat history as session data, not disposable component state.
+`standard-ui` is a provider-agnostic chat workspace for local and hosted model backends. Its core contract is narrow: keep provider differences at the API boundary, preserve saved thread history, and avoid turning local runtime state into a managed platform.
 
-## Start
+## Runtime
 
-One command:
+Development:
 
 ```bash
 npm run setup
@@ -40,23 +40,19 @@ npm run setup
 
 Open `http://localhost:3000`.
 
-Other starts:
-
 | Need | Command |
 | --- | --- |
 | npm dev | `npm install && npm run dev` |
 | Docker | `docker compose up --build` |
 | Production | `npm install && npm run prod` |
 
-## Configure
+## Configuration
 
-Copy the example only if you need hosted providers:
+Use `.env` only for non-default backends:
 
 ```bash
 cp .env.example .env
 ```
-
-Useful env vars:
 
 | Backend | Minimum config |
 | --- | --- |
@@ -66,15 +62,13 @@ Useful env vars:
 
 Docker defaults Ollama to `http://host.docker.internal:11434` so a container can talk to a host Ollama process.
 
-## Contracts
+## Project Contracts
 
-What matters:
-
-- Saved chat history belongs to the thread/session.
-- Request history can be windowed before it hits a backend.
-- Provider differences stay behind `/api/backends`, `/api/models`, and `/api/chat`.
-- Custom gateways live in `.standard-ui/provider-plugins.json`.
+- Thread history is persisted session data; request history is derived and may be windowed.
+- Provider-specific payloads stay behind `/api/backends`, `/api/models`, and `/api/chat`.
+- Custom gateways live in `.standard-ui/provider-plugins.json`, not in hardcoded UI branches.
 - Uploads and provider plugins live in `.standard-ui`; selected UI state lives in browser storage.
+- Engineering rules live in [`docs/engineering.md`](./docs/engineering.md) and [`docs/frontend-state.md`](./docs/frontend-state.md).
 
 Supported backend shapes:
 
@@ -85,7 +79,7 @@ Supported backend shapes:
 | Ollama | `GET /api/tags` | `POST /api/chat` |
 | Custom gateway | `modelsPath` | `chatPath` |
 
-Plugin contract source: [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts).
+Custom provider schema: [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts).
 
 ## Repo Map
 
@@ -94,7 +88,7 @@ Plugin contract source: [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/prov
 - [`hooks/use-chat-streaming.ts`](./hooks/use-chat-streaming.ts): request streaming
 - [`lib/thread-storage.ts`](./lib/thread-storage.ts): local thread persistence guard
 - [`components/chat`](./components/chat): chat surface
-- [`docs/frontend-state.md`](./docs/frontend-state.md): frontend state refactor notes
+- [`docs/frontend-state.md`](./docs/frontend-state.md): frontend state contract
 
 ## Docs
 

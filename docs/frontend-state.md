@@ -1,95 +1,67 @@
-# Frontend State Plan
+# Frontend State Contract
 
-This document is intentionally practical. The goal is not to do a clever rewrite. The goal is to make the chat flow reliable, make state ownership obvious, and make future bugs easier to isolate.
+This document defines the state model the chat surface is expected to preserve. It is not an implementation wishlist.
 
-## North Star
+## Terms
 
-The product should feel like a long white lab corridor: clean, quiet, structured, and inevitable. Everything should look and behave as if it belongs exactly where it is.
+- `thread history`: the persisted messages owned by a saved chat thread.
+- `request history`: the bounded message list sent to a provider for one request.
+- `visible history`: the messages rendered in the active thread.
+- `session key`: the provider-side conversation identity for a thread. For the built-in flow, it resolves to the thread id.
+- `intentional shrink`: an edit, regenerate, or empty-placeholder cleanup that is allowed to shorten a message list.
 
-For frontend engineering, that means:
+Do not use `history` without qualifying which one you mean.
 
-- One clear path through the app. A message should travel from composer, to thread state, to bounded request, to stream patching, to persistence without hidden detours.
-- No exposed wiring. Persistence, request bounding, model loading, and streaming internals should sit behind named hooks and helpers, not leak into presentational components.
-- Clean surfaces with strict ownership. A component should own its own local UI behavior, but not own app history, provider selection, or persistence.
-- Predictable recovery. If storage, streaming, or model loading fails, the app should preserve user work and degrade to a known state instead of silently replacing history.
-- Calm defaults. Prefer simple, explicit state transitions over clever abstractions. If a future engineer has to guess where state lives, the design has failed.
+## Owners
 
-## Current Problems
+| Area | Owner | Contract |
+| --- | --- | --- |
+| Thread list, selected thread, drafts, prompt artifacts | `hooks/use-chat-threads.ts` | Owns thread lifecycle and persistence scheduling. |
+| Thread storage and shrink guards | `lib/thread-storage.ts` | Centralizes hydration, normalization, backup recovery, and safe persistence. |
+| Streaming, abort, submit, regenerate, edit continuation | `hooks/use-chat-streaming.ts` | Builds the request window and patches only the active stream target. |
+| Backend/model selection and capabilities | `hooks/use-provider-selection.ts` | Keeps provider availability separate from thread contents. |
+| Generation settings and appearance preferences | `hooks/use-chat-preferences.ts` | Persists user preferences without writing thread messages. |
+| Inline edit, copy state, virtual window, mobile panel state | component-local state | May affect presentation only. |
 
-- `app/page.tsx` owns too many responsibilities: thread state, persistence, provider/model loading, streaming, drafts, uploads, settings, keyboard shortcuts, mobile sidebar state, and boot behavior all live in one component.
-- State is split across many `useState` calls and refs. Some refs mirror state for async callbacks, which makes it hard to know which value is authoritative.
-- Chat history has more than one meaning: saved thread history, request payload history, visible message window, regenerate/edit history, and provider session key. These should not share loose names.
-- Persistence is side-effect driven. Thread writes happen from effects, while thread edits happen from event handlers and streaming callbacks. That makes accidental overwrites possible if hydration, fallback state, or streaming timing changes.
-- Streaming mutates thread messages from an async function outside the component. This is workable, but the mutation contract is implicit.
-- Normalization and bounding logic is duplicated between the client and server. Some duplication is acceptable for safety, but the intended source of truth should be obvious.
-- Components are not cleanly split between presentational UI and state orchestration. Several components receive broad props and know too much about app behavior.
-- Theme data is large string-based configuration. That is fine for now, but it should stay isolated from business state and not leak into state orchestration.
+`app/page.tsx` composes these owners. It should not become a second persistence layer.
 
-## Target Shape
+## Non-Negotiable Invariants
 
-Keep the app local-first and React-native. Do not add Redux, Zustand, XState, or a backend database just to feel organized. First make ownership explicit.
+- Thread history must not be cleared by provider, model, settings, theme, sidebar, upload, or render-window state changes.
+- Request windowing must happen after a full thread history has been selected; it must not mutate the saved thread.
+- A message-list shrink must be explicit and scoped to the exact message-id sequence allowed by the edit/regenerate flow.
+- Persistence must wait for storage hydration. Fallback/default threads must not overwrite stored conversations.
+- A stream may append to the assistant placeholder it created, finalize metadata for that placeholder, or remove the placeholder when no chunks arrived.
+- Regenerate and edit are the only normal user flows that may truncate visible history.
+- A selected thread id must resolve to an existing thread after hydration and after deletion.
+- UI components must not read or write thread storage keys.
 
-State owners should be:
+## Request Lifecycle
 
-- `useChatThreads`: owns `threads`, `selectedThreadId`, drafts by thread, prompt artifacts by thread, session keys by thread, and thread persistence.
-- `useChatStreaming`: owns active stream state, abort controller, request submission, response patching, stop, regenerate, and edit continuation.
-- `useProviderSelection`: owns backend list, selected backend, model list, selected model, and model capabilities refresh.
-- `useChatPreferences`: owns appearance mode, generation settings by backend, stream readability pace, and local preference persistence.
-- Component-local state: owns purely visual state such as sidebar collapse, mobile sidebar open, copied message id, inline edit draft, render window size, and metrics visibility.
+1. Composer submits user input and attachments.
+2. `useChatThreads` appends the user message and assistant placeholder to the selected thread.
+3. `useChatStreaming` derives the bounded request history from the selected thread.
+4. `/api/chat` normalizes provider-specific streaming into the app stream shape.
+5. `useChatStreaming` patches only the assistant placeholder created for that request.
+6. `useChatThreads` persists the resulting thread through the guarded storage path.
 
-`app/page.tsx` should eventually become orchestration glue: compose hooks, derive `activeThread`, and pass narrow props to components.
+Any new feature that bypasses this path needs a reason in the PR.
 
-## Required Invariants
+## Change Rules
 
-- Never persist thread state before storage hydration has completed.
-- Never replace a stored conversation with fallback state unless the user explicitly deleted all chats.
-- Saved thread history and request payload history are different things. Saved history should remain complete; request history can be bounded.
-- A stream may only append to the assistant message it created, finalize its metrics, or remove that assistant placeholder when no chunks arrived.
-- Regenerate and edit are the only normal flows that intentionally truncate visible thread history.
-- A selected thread id must always point to an existing thread after hydration.
-- Storage writes should be centralized. Components should not write thread data directly to `localStorage`.
-- Components should receive actions like `onSubmitMessage` or `onDeleteThread`, not storage keys or persistence details.
+- State changes must name the owner they modify. If a change touches more than one owner, the PR must explain the boundary.
+- History changes must state whether they affect thread history, request history, visible history, or session key behavior.
+- Provider changes must stay behind capability flags and API adapters unless the UI behavior genuinely differs by provider.
+- Component changes may introduce local UI state, but not persistence, provider routing, request bounding, or stream ownership.
+- Storage changes must include the failure mode: hydration failure, malformed storage, stale backup, and unsafe shrink.
+- Edit/regenerate changes must be tested against the case where the replacement stream fails before the first chunk.
 
-## Refactor Order
+## Review Gates
 
-1. Move pure thread storage helpers out of `app/page.tsx`.
-   Keep behavior unchanged. Move parsing, normalization, backup reads, and message counting into `lib/thread-storage.ts` with small tests or at least simple fixtures.
+Before merging a state-related change, a reviewer should be able to answer:
 
-2. Introduce `useChatThreads`.
-   Move thread list state, selected thread id, draft maps, prompt artifact maps, session keys, `patchThread`, `createThread`, delete, rename, and thread persistence into one hook.
-
-3. Introduce a small reducer for thread mutations.
-   Use explicit actions such as `hydrate`, `createThread`, `appendUserAndAssistantPlaceholder`, `patchAssistantMessage`, `deleteThread`, `renameThread`, `truncateForRegenerate`, and `truncateForEdit`.
-
-4. Move streaming orchestration into `useChatStreaming`.
-   Keep `streamAssistantResponse` as the lower-level stream consumer, but make the hook responsible for preparing request messages, owning abort state, and dispatching thread actions.
-
-5. Move provider/model loading into `useProviderSelection`.
-   Keep backend API contracts unchanged. The hook should expose `backends`, `models`, selected ids, readiness flags, refresh methods, and errors.
-
-6. Split app-level and component-local state.
-   `ChatComposer`, `ChatMessages`, `ChatSidebar`, and `SettingsView` should stay mostly presentational. Their local state should only cover UI behavior inside that component.
-
-7. Add focused regression tests around pure logic.
-   Start with thread storage hydration, request message bounding, regenerate/edit truncation, and stream patching. Do not block the cleanup on a large test framework redesign.
-
-## What Not To Do Yet
-
-- Do not rewrite the app into a new state library.
-- Do not move local thread history to a backend service.
-- Do not merge all state into one giant reducer in `app/page.tsx`.
-- Do not refactor theme strings and chat state at the same time.
-- Do not change the provider API while cleaning up frontend state.
-
-## Definition Of Done
-
-This cleanup is working when a developer can answer these questions quickly:
-
-- Where does saved chat history live?
-- What code decides what request history is sent to the model?
-- Which flows intentionally truncate thread messages?
-- What code owns active streaming and cancellation?
-- What code persists thread state?
-- Which component owns a given piece of UI-only state?
-
-If those answers are obvious, the app is much less likely to flush history or lose state in the middle of a conversation.
+- Which state owner changed?
+- Can any unrelated state transition clear thread history?
+- Is request windowing still separate from persistence?
+- Which exact flow is allowed to shrink messages?
+- What happens if a stream starts, fails, and produces no assistant content?

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## Unreleased
+
+- Reworked contributor and engineering docs around concrete state, provider, runtime, and review contracts.
+- Tightened README language to avoid generic onboarding and focus on project boundaries.
+
 ## 0.1.1 - 2026-04-09
 
 - Upgraded Next.js from `14.2.5` to `14.2.35`

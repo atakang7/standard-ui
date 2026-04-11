@@ -1,50 +1,59 @@
-# Engineering Guide
+# Engineering Contract
 
-This is the short version of how to work on `standard-ui` without turning it into a mess.
+`standard-ui` is a public, provider-agnostic client. The codebase should make its boundaries visible: provider translation at the server edge, session history in the thread layer, and component state inside components.
 
-## Project Map
+## Architecture Boundaries
 
-- `app/page.tsx`: main chat application shell and client state orchestration
-- `app/api/*`: backend adapters, model loading, chat routing, uploads, and provider plugin endpoints
-- `components/chat/*`: chat UI, composer, sidebar, message rendering, settings
-- `lib/*`: shared types, storage helpers, constants, and utility functions
-- `public/fonts/*`: UI fonts used by the frontend
-- `.standard-ui/`: local runtime state for provider plugins and uploads, intentionally not committed
+| Boundary | Rule |
+| --- | --- |
+| Provider adapters | Provider-specific payloads stay in `app/api/_lib/backends.ts` or custom provider plugin code. |
+| Chat state | Thread lifecycle and persistence stay in `hooks/use-chat-threads.ts` and `lib/thread-storage.ts`. |
+| Streaming | Request construction, abort, edit, and regenerate stay in `hooks/use-chat-streaming.ts`. |
+| UI components | Components render state and own interaction-local state only. |
+| Runtime files | `.standard-ui` is runtime state and must not be committed. |
+| Private infrastructure | Private proxy scripts, credentials, deployment-only assumptions, and local tunnels stay out of the public repo. |
 
-For the frontend state cleanup plan, see [`frontend-state.md`](./frontend-state.md).
+## State Rules
 
-## Engineering Principles
+- Persisted thread history is the source of truth for saved conversations.
+- Provider request history is derived data and may be windowed.
+- Changing backend, model, settings, appearance, uploads, or sidebar state must not mutate thread history.
+- Any intentional message-list shrink must pass through the guarded thread persistence path.
+- Storage recovery should prefer preserving older valid history over accepting a shorter unsafe write.
 
-- Provider-agnostic first. Favor common interfaces and capability flags over provider-specific branching in the UI.
-- Local-first state. If state is user-local or operational, prefer keeping it on disk or in browser storage instead of inventing a service.
-- Thin server layer. Keep API routes simple, direct, and easy to inspect.
-- Pragmatic over abstract. Add abstraction only after duplication is clearly hurting us.
-- Public repo boundary. Private infrastructure glue stays out of this repository.
+See [`frontend-state.md`](./frontend-state.md) for the full state contract.
 
-## Common Changes
+## Provider Rules
 
-### Add or update a backend
+- Add a capability flag before adding provider-specific UI branches.
+- Normalize provider streams before they reach chat components.
+- Keep API routes thin: validate input, call the adapter, stream normalized output.
+- Custom gateways should use `.standard-ui/provider-plugins.json`; do not hardcode one private gateway into the app.
+- New provider env vars require `.env.example` and README updates.
 
-- Start in `app/api/_lib/backends.ts`.
-- Keep capability detection explicit.
-- If the backend needs custom settings, make them obvious in the UI and document them.
+## UI Rules
 
-### Change message rendering
+- Components may own presentation state: open panels, inline draft text, copy state, viewport/window size, and transient focus state.
+- Components may not own thread persistence, provider routing, request windowing, or active stream identity.
+- Large components should be split by ownership, not by arbitrary line count.
+- Visual polish should reinforce the product contract: calm state, readable controls, no hidden provider coupling.
 
-- Start in `components/chat/chat-messages.tsx`.
-- Preserve readable plain text and code block behavior.
-- Be careful with large user messages, artifact bundling, and streaming output.
+## Runtime Rules
 
-### Change settings UX
+- Default local development should work without hosted provider credentials.
+- Docker must preserve `.standard-ui` across restarts.
+- The public repo must not depend on ignored proxy helpers.
+- Build output, logs, runtime uploads, and env files stay ignored.
 
-- Start in `components/chat/settings-view.tsx`.
-- Keep labels concrete.
-- Prefer a few good controls over a large panel of edge-case toggles.
+## Required Validation
 
-## Review Checklist
+Use the smallest validation set that covers the touched contract:
 
-- Does this still work without private proxy files?
-- Are `.env` files, local artifacts, and generated runtime files still ignored?
-- Did we keep the default local workflow simple?
-- Did we run `npm run build`?
-- Did we document user-visible behavior changes?
+| Change | Minimum validation |
+| --- | --- |
+| Chat state, streaming, providers, uploads | `npm run build` plus the affected manual flow |
+| Docker/runtime start | `docker compose --env-file /dev/null config` and a container HTTP smoke test |
+| SVG/docs-only visual asset | XML/format check plus rendered preview |
+| Provider contract | Verify model list and one streaming response for that provider shape |
+
+Do not mark a PR as validated by CI alone when the change depends on a provider, browser storage, Docker networking, or stream timing.
