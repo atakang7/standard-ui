@@ -1,11 +1,11 @@
 <p align="center">
-  <a href="./docs/standard-ui-first-look.png">
-    <img src="./docs/standard-ui-first-look.png" alt="standard-ui first look" width="1100">
+  <a href="./docs/hero.svg">
+    <img src="./docs/hero.svg" alt="standard-ui clean provider-agnostic chat workspace" width="1100">
   </a>
 </p>
 
 <p align="center">
-  <sub>Clean chat UI with backend switcher, model picker, and local-first state built in.</sub>
+  <sub>Lab-clean, local-first chat UI for teams that do not want to hardcode one model vendor.</sub>
 </p>
 
 <h1 align="center">standard-ui</h1>
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Small repo. Clear data flow. Easy to fork.
+  Quiet interface. Clear contracts. Serious about state.
 </p>
 
 <p align="center">
@@ -28,18 +28,38 @@
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> ·
-  <a href="#standard-interfaces">Standard Interfaces</a> ·
-  <a href="#supported-backends">Supported Backends</a> ·
+  <a href="#what-it-is">What It Is</a> ·
+  <a href="#standards-in-this-project">Standards</a> ·
+  <a href="#supported-backends">Backends</a> ·
   <a href="#repo-map">Repo Map</a>
 </p>
 
-`standard-ui` gives you one chat frontend across different model backends. It keeps the UI clean, the server layer thin, and the repo easy to understand.
+`standard-ui` is a provider-agnostic chat workspace for real model stacks. It is built for a simple promise: the interface should stay calm, the contracts should stay readable, and chat history should belong to the session.
+
+The main idea is simple: if a backend can list models, stream chat, and expose a few capability flags, this UI can sit on top of it.
+
+## What It Is
+
+- A Next.js chat UI for OpenAI-compatible APIs, Anthropic, Ollama, and custom gateways.
+- A local-first workspace for threads, drafts, settings, attachments, and provider plugins.
+- A thin backend routing layer that keeps provider differences out of the UI.
+- A repo meant to be read, forked, and modified without inheriting a private platform.
+
+## Product Feel
+
+The intended feel is a long white lab corridor: clean, quiet, structured, and hard to accidentally break. That shows up in the product and the repo:
+
+- chat history is treated as session-owned data, not disposable component state
+- request history can be bounded, but saved thread history remains complete
+- provider integrations are contracts, not one-off branches hidden in the UI
+- UI components should own local interaction only, not persistence or provider orchestration
 
 ## Why standard-ui
 
 - One UI for many backends.
 - Local-first threads, drafts, settings, and uploads.
-- Thin server routes you can actually read.
+- Thin server routes you can read in one sitting.
+- Guardrails around session history and persistence.
 - Custom gateways without rewriting the app.
 - Small enough to understand end to end.
 
@@ -100,23 +120,64 @@ npm run build
 npm run start
 ```
 
-## Standard Interfaces
+## Standards in this project
 
-This repo uses a small set of clear interfaces. These are the main ones.
+This repo is built around a small set of explicit standards.
 
-### Provider interfaces
+### 1. Internal app API
 
-| Backend | Model list | Chat interface |
+These are the app routes the UI talks to.
+
+| Route | Method | Standard behavior |
 | --- | --- | --- |
-| OpenAI-compatible | `GET /models` | `POST /chat/completions` |
-| Anthropic | `GET /models` | `POST /messages` |
-| Ollama | `GET /api/tags` | `POST /api/chat` |
+| `/api/backends` | `GET` | lists configured backends and the default backend |
+| `/api/models?backend=...` | `GET` | lists models for one backend |
+| `/api/models?backend=...&model=...` | `GET` | returns capability flags for one model |
+| `/api/chat` | `POST` | accepts normalized chat input and returns an NDJSON stream |
+| `/api/providers` | `GET` | lists local custom providers |
+| `/api/providers` | `POST` | creates or updates one local custom provider |
+| `/api/providers?id=...` | `DELETE` | deletes one local custom provider |
+| `/api/uploads` | `POST` | accepts multipart uploads under the `files` field |
+| `/api/uploads/[id]` | `GET` | serves one stored upload back to the UI |
 
-### Custom gateway interface
+Minimal `/api/chat` request:
 
-Custom gateways are defined in `.standard-ui/provider-plugins.json`.
+```json
+{
+  "backend": "ollama",
+  "model": "llama3.2",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello"
+    }
+  ]
+}
+```
 
-The plugin shape is defined in [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts).
+Minimal NDJSON stream shape:
+
+```json
+{"message":{"role":"assistant","content":"Hi"}}
+{"done":true}
+```
+
+### 2. Provider contracts
+
+These are the standard provider interfaces already supported.
+
+| Backend | Model list | Chat interface | Stream shape |
+| --- | --- | --- | --- |
+| OpenAI-compatible | `GET /models` | `POST /chat/completions` | SSE |
+| Anthropic | `GET /models` | `POST /messages` | SSE |
+| Ollama | `GET /api/tags` | `POST /api/chat` | NDJSON |
+| Custom gateway | `modelsPath` | `chatPath` | `ndjson`, `sse-standard`, or `openai` |
+
+### 3. Custom provider plugin contract
+
+Custom gateways live in `.standard-ui/provider-plugins.json`.
+
+The shape is defined in [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts).
 
 Important fields:
 
@@ -126,43 +187,102 @@ Important fields:
 - `modelsSource`: `remote` or `static`
 - `streamFormat`: `ndjson`, `sse-standard`, or `openai`
 - `headers`: custom request headers
-- `staticModels`: fixed model list when you do not load models remotely
+- `staticModels`: fixed model list when models are not remote
 - `capabilities`: backend setting support
 - `modelCapabilities`: input and attachment support
 
-### Internal TypeScript interfaces
+Minimal example:
 
-The shared app contracts live in [`lib/types.ts`](./lib/types.ts).
+```json
+{
+  "providers": [
+    {
+      "name": "My Gateway",
+      "baseUrl": "https://gateway.example.com",
+      "modelsPath": "/models",
+      "chatPath": "/chat/stream",
+      "modelsSource": "remote",
+      "streamFormat": "ndjson",
+      "headers": {
+        "accept": "application/x-ndjson"
+      }
+    }
+  ]
+}
+```
 
-| Interface | Purpose |
+### 4. Shared TypeScript contracts
+
+Shared app types live in [`lib/types.ts`](./lib/types.ts).
+
+| Interface | What it means |
 | --- | --- |
 | `BackendOption` | backend shown in the UI |
 | `ModelOption` | model shown in the picker |
 | `BackendsResponse` | response from `/api/backends` |
 | `ModelsResponse` | response from `/api/models` |
-| `RequestMessage` | message sent into the backend layer |
-| `StreamChunk` | normalized streaming event |
+| `RequestMessage` | normalized message passed into the backend layer |
+| `StreamChunk` | normalized streaming event shape |
 | `ChatThread` | saved local thread |
 | `ChatMessage` | saved local message |
 | `ChatAttachment` | attachment metadata used by the UI |
 | `ChatArtifact` | bundled prompt artifact metadata |
 | `ChatSettings` | shared generation settings |
 
+### 5. Local runtime standards
+
+These are the default places where local runtime data lives.
+
+| Location | Standard use |
+| --- | --- |
+| `.standard-ui/provider-plugins.json` | saved custom providers |
+| `.standard-ui/uploads` | uploaded files and attachment metadata |
+| browser local storage | threads, drafts, selected backend/model, settings, appearance |
+
+### 6. Default behavior
+
+These are the default rules the app follows.
+
+- `/api/chat` returns `application/x-ndjson`
+- chat requests are bounded before they hit the backend
+- uploads use the `files` form field
+- uploads are limited to 10 files per request
+- total upload batch size is limited to 40 MB
+- default single attachment limit is 20 MB
+
+### 7. Core config
+
+These are the main env vars the project expects.
+
+| Env var | Standard use |
+| --- | --- |
+| `OLLAMA_BASE_URL` | points to the Ollama server |
+| `OLLAMA_ENABLED` | turns the built-in Ollama backend on or off |
+| `OPENAI_ENABLED` | turns the OpenAI-compatible backend on |
+| `OPENAI_BASE_URL` | points to the OpenAI-compatible server |
+| `OPENAI_API_KEY` | auth for the OpenAI-compatible backend |
+| `ANTHROPIC_ENABLED` | turns the Anthropic backend on |
+| `ANTHROPIC_BASE_URL` | points to the Anthropic API |
+| `ANTHROPIC_API_KEY` | auth for the Anthropic backend |
+| `MODEL_CAPABILITY_PROBE` | turns automatic model capability probing on or off |
+
 ## Supported Backends
 
 | Backend | Status | Notes |
 | --- | --- | --- |
-| OpenAI-compatible APIs | Built in | Works with OpenAI-style model and chat endpoints |
-| Anthropic | Built in | Works with Anthropic model and messages endpoints |
-| Ollama | Built in | Works with local Ollama model and chat endpoints |
-| Custom gateways | Built in | Works through the local provider plugin interface |
+| OpenAI-compatible APIs | Built in | Uses OpenAI-style model and chat endpoints |
+| Anthropic | Built in | Uses Anthropic model and messages endpoints |
+| Ollama | Built in | Uses local Ollama model and chat endpoints |
+| Custom gateways | Built in | Uses the local provider plugin contract |
 
 ## Repo Map
 
 - [`app/page.tsx`](./app/page.tsx): main chat shell and local state
 - [`app/api/_lib/backends.ts`](./app/api/_lib/backends.ts): backend translation layer
 - [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts): custom gateway contract
+- [`app/api/_lib/uploads.ts`](./app/api/_lib/uploads.ts): upload storage and attachment parsing
 - [`components/chat`](./components/chat): chat UI components
+- [`lib/types.ts`](./lib/types.ts): shared app contracts
 - [`docs/engineering.md`](./docs/engineering.md): contributor guide
 
 ## Docs
