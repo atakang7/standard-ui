@@ -152,10 +152,9 @@ export default function Page() {
     [composerAttachments, activeModelCapabilities]
   );
 
-  const providerUi = "claude" as const;
   const providerTheme = useMemo(
-    () => getProviderTheme(providerUi, resolvedAppearanceMode),
-    [providerUi, resolvedAppearanceMode]
+    () => getProviderTheme(resolvedAppearanceMode),
+    [resolvedAppearanceMode]
   );
   const prerequisitesReady =
     preferencesReady && isStorageHydrated && backendsReady && modelsReady;

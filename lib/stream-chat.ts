@@ -18,6 +18,8 @@ export type StreamChatOptions = {
   settings: ChatSettings;
   onPatchThread: (threadId: string, update: (thread: ChatThread) => ChatThread) => void;
   onError: (error: unknown) => void;
+  onFirstChunk?: () => void;
+  onEmptyResponse?: () => void;
   onComplete: () => void;
   abortController: AbortController;
 };
@@ -122,6 +124,8 @@ export async function streamAssistantResponse(options: StreamChatOptions) {
     settings,
     onPatchThread,
     onError,
+    onFirstChunk,
+    onEmptyResponse,
     onComplete,
     abortController,
   } = options;
@@ -306,6 +310,12 @@ export async function streamAssistantResponse(options: StreamChatOptions) {
     }, STREAM_FLUSH_INTERVAL_MS);
   };
 
+  const markReceivedChunk = () => {
+    if (receivedChunk) return;
+    onFirstChunk?.();
+    receivedChunk = true;
+  };
+
   try {
     const response = await requestWithRetry();
 
@@ -371,7 +381,7 @@ export async function streamAssistantResponse(options: StreamChatOptions) {
 
       const chunk = parsed.message?.content;
       if (typeof chunk === "string" && chunk.length > 0) {
-        receivedChunk = true;
+        markReceivedChunk();
         pendingChunk += chunk;
         scheduleChunkFlush();
       }
@@ -391,7 +401,7 @@ export async function streamAssistantResponse(options: StreamChatOptions) {
           ? (parsed as { thinking: string }).thinking
           : "");
       if (typeof thinkingChunk === "string" && thinkingChunk.length > 0) {
-        receivedChunk = true;
+        markReceivedChunk();
         pendingThinkingChunk += thinkingChunk;
         scheduleChunkFlush();
       }
@@ -427,16 +437,23 @@ export async function streamAssistantResponse(options: StreamChatOptions) {
       onError(error);
     }
 
-    if (!receivedChunk) {
-      onPatchThread(threadId, (thread) => ({
-        ...thread,
-        updatedAt: Date.now(),
-        messages: thread.messages.filter((message) => message.id !== assistantMessageId),
-      }));
-    }
   } finally {
     clearChunkFlushTimer();
     flushPendingChunk();
+
+    if (!receivedChunk) {
+      if (onEmptyResponse) {
+        onEmptyResponse();
+      } else {
+        onPatchThread(threadId, (thread) => ({
+          ...thread,
+          updatedAt: Date.now(),
+          messages: thread.messages.filter((message) => message.id !== assistantMessageId),
+        }));
+      }
+      onComplete();
+      return;
+    }
 
     const finalizedAt = Date.now();
     onPatchThread(threadId, (thread) => {

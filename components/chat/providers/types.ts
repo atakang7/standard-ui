@@ -1,4 +1,3 @@
-export type ProviderUi = "openai" | "claude" | "gemini";
 export type ThemeMode = "light" | "dark";
 
 export type ProviderTheme = {

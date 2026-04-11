@@ -221,6 +221,7 @@ export function useChatStreaming({
       if (!baseMessages.some((message) => message.role === "user")) return;
 
       const threadId = activeThread.id;
+      const previousSessionKey = getSessionKeyForThread(threadId);
       const nextSessionKey = createId();
       setSessionKeyForThread(threadId, nextSessionKey);
       const nextAssistantMessageId = createId();
@@ -238,14 +239,6 @@ export function useChatStreaming({
       };
 
       onClearChatError();
-
-      patchThread(threadId, (thread) => ({
-        ...thread,
-        updatedAt: Date.now(),
-        backend: selectedBackend,
-        model: selectedModel,
-        messages: [...baseMessages, newAssistantMessage],
-      }));
 
       const requestMessages: RequestMessage[] = baseMessages.map((message) => ({
         role: message.role,
@@ -268,6 +261,18 @@ export function useChatStreaming({
         onError: (error) => {
           onChatError(error, providerLabel || selectedBackend);
         },
+        onFirstChunk: () => {
+          patchThread(threadId, (thread) => ({
+            ...thread,
+            updatedAt: Date.now(),
+            backend: selectedBackend,
+            model: selectedModel,
+            messages: [...baseMessages, newAssistantMessage],
+          }));
+        },
+        onEmptyResponse: () => {
+          setSessionKeyForThread(threadId, previousSessionKey);
+        },
         onComplete: streaming.completeStreaming,
         abortController: controller,
       });
@@ -275,6 +280,7 @@ export function useChatStreaming({
     [
       activeSettings,
       activeThread,
+      getSessionKeyForThread,
       onChatError,
       onClearChatError,
       patchThread,
@@ -308,6 +314,7 @@ export function useChatStreaming({
       });
 
       const threadId = activeThread.id;
+      const previousSessionKey = getSessionKeyForThread(threadId);
       const nextSessionKey = createId();
       setSessionKeyForThread(threadId, nextSessionKey);
       const newAssistantMessageId = createId();
@@ -325,15 +332,6 @@ export function useChatStreaming({
       };
 
       onClearChatError();
-
-      patchThread(threadId, (thread) => ({
-        ...thread,
-        title: userMessageIndex === 0 ? buildThreadTitle(trimmed) : thread.title,
-        updatedAt: Date.now(),
-        backend: selectedBackend,
-        model: selectedModel,
-        messages: [...updatedHistory, newAssistantMessage],
-      }));
 
       const requestMessages: RequestMessage[] = updatedHistory.map((message) => ({
         role: message.role,
@@ -356,6 +354,19 @@ export function useChatStreaming({
         onError: (error) => {
           onChatError(error, providerLabel || selectedBackend);
         },
+        onFirstChunk: () => {
+          patchThread(threadId, (thread) => ({
+            ...thread,
+            title: userMessageIndex === 0 ? buildThreadTitle(trimmed) : thread.title,
+            updatedAt: Date.now(),
+            backend: selectedBackend,
+            model: selectedModel,
+            messages: [...updatedHistory, newAssistantMessage],
+          }));
+        },
+        onEmptyResponse: () => {
+          setSessionKeyForThread(threadId, previousSessionKey);
+        },
         onComplete: streaming.completeStreaming,
         abortController: controller,
       });
@@ -363,6 +374,7 @@ export function useChatStreaming({
     [
       activeSettings,
       activeThread,
+      getSessionKeyForThread,
       onChatError,
       onClearChatError,
       patchThread,
