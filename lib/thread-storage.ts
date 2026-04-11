@@ -5,7 +5,7 @@ import {
   THREADS_KEY,
 } from "./constants";
 import { createId, createThread } from "./storage";
-import type { ChatThread } from "./types";
+import type { ChatMessage, ChatThread, ThreadPatchOptions } from "./types";
 import { normalizeArtifacts, normalizeAttachments, normalizeMessageMetrics } from "./utils";
 
 type ThreadStorage = Pick<Storage, "getItem" | "setItem">;
@@ -28,12 +28,67 @@ export type ThreadPersistenceResult =
       nextMessageCount: number;
       streamingThreadId: string;
     }
+  | {
+      status: "recovered-shrink";
+      recoveredThreadIds: string[];
+    }
   | { status: "failed"; error: unknown };
 
 export type ThreadSelectionPersistenceResult = { status: "persisted" } | { status: "failed"; error: unknown };
 
 export function countThreadMessages(threads: ChatThread[]) {
   return threads.reduce((count, thread) => count + thread.messages.length, 0);
+}
+
+function isEmptyAssistantPlaceholder(message: ChatMessage) {
+  return (
+    message.role === "assistant" &&
+    !message.content.trim() &&
+    !message.modelContent?.trim() &&
+    !message.reasoning?.trim() &&
+    !message.artifacts?.length &&
+    !message.attachments?.length
+  );
+}
+
+function isOnlyDiscardingEmptyAssistantPlaceholders(
+  previousMessages: ChatMessage[],
+  nextMessages: ChatMessage[]
+) {
+  const nextMessageIds = new Set(nextMessages.map((message) => message.id));
+  const removedMessages = previousMessages.filter((message) => !nextMessageIds.has(message.id));
+  return removedMessages.length > 0 && removedMessages.every(isEmptyAssistantPlaceholder);
+}
+
+export function guardThreadHistory(
+  previousThread: ChatThread,
+  nextThread: ChatThread,
+  options: ThreadPatchOptions = {}
+) {
+  if (nextThread.messages.length >= previousThread.messages.length) {
+    return { thread: nextThread, recovered: false };
+  }
+
+  if (
+    options.allowMessageShrink ||
+    isOnlyDiscardingEmptyAssistantPlaceholders(previousThread.messages, nextThread.messages)
+  ) {
+    return { thread: nextThread, recovered: false };
+  }
+
+  return {
+    thread: {
+      ...nextThread,
+      updatedAt: Math.max(previousThread.updatedAt, nextThread.updatedAt),
+      messages: previousThread.messages,
+    },
+    recovered: true,
+  };
+}
+
+function hasSameMessageIds(messages: ChatMessage[], messageIds: readonly string[]) {
+  if (messages.length !== messageIds.length) return false;
+  return messages.every((message, index) => message.id === messageIds[index]);
 }
 
 export function normalizeStoredThreads(raw: string | null): StoredThreadsResult {
@@ -140,13 +195,40 @@ export function readStoredThreadSelection(storage: ThreadStorage): StoredThreadS
 export function persistStoredThreads(
   storage: ThreadStorage,
   threads: ChatThread[],
-  streamingThreadId: string | null
+  streamingThreadId: string | null,
+  options: {
+    allowMessageShrinkThreadMessageIds?: ReadonlyMap<string, readonly string[]>;
+  } = {}
 ): ThreadPersistenceResult {
   try {
     const previousRaw = storage.getItem(THREADS_KEY);
     const previousThreads = normalizeStoredThreads(previousRaw).threads;
+    const previousThreadsById = new Map(previousThreads.map((thread) => [thread.id, thread]));
+    const recoveredThreadIds: string[] = [];
+    const guardedThreads = threads.map((thread) => {
+      const previousThread = previousThreadsById.get(thread.id);
+      if (!previousThread) return thread;
+      const allowedMessageIds = options.allowMessageShrinkThreadMessageIds?.get(thread.id);
+      const result = guardThreadHistory(previousThread, thread, {
+        allowMessageShrink: Boolean(allowedMessageIds && hasSameMessageIds(thread.messages, allowedMessageIds)),
+        reason: "persist",
+      });
+      if (result.recovered) {
+        recoveredThreadIds.push(thread.id);
+      }
+      return result.thread;
+    });
     const previousMessageCount = countThreadMessages(previousThreads);
-    const nextMessageCount = countThreadMessages(threads);
+    const nextMessageCount = countThreadMessages(guardedThreads);
+
+    if (recoveredThreadIds.length) {
+      const nextRaw = JSON.stringify(guardedThreads);
+      storage.setItem(THREADS_KEY, nextRaw);
+      return {
+        status: "recovered-shrink",
+        recoveredThreadIds,
+      };
+    }
 
     if (streamingThreadId && previousMessageCount > nextMessageCount) {
       return {
@@ -157,7 +239,7 @@ export function persistStoredThreads(
       };
     }
 
-    const nextRaw = JSON.stringify(threads);
+    const nextRaw = JSON.stringify(guardedThreads);
     if (previousRaw && previousRaw !== nextRaw) {
       storage.setItem(THREADS_BACKUP_KEY, previousRaw);
     }

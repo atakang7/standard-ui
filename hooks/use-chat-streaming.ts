@@ -4,7 +4,15 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { mergePromptWithArtifacts } from "../lib/message-artifacts";
 import { createId } from "../lib/storage";
 import { streamAssistantResponse } from "../lib/stream-chat";
-import type { ChatArtifact, ChatAttachment, ChatMessage, ChatSettings, ChatThread, RequestMessage } from "../lib/types";
+import type {
+  ChatArtifact,
+  ChatAttachment,
+  ChatMessage,
+  ChatSettings,
+  ChatThread,
+  RequestMessage,
+  ThreadPatchOptions,
+} from "../lib/types";
 import { buildThreadTitle } from "../lib/utils";
 
 export type ChatStreamingController = ReturnType<typeof useChatStreamingController>;
@@ -19,10 +27,13 @@ type UseChatStreamingOptions = {
   composerAttachments: ChatAttachment[];
   composerPromptArtifacts: ChatArtifact[];
   isUploadingAttachments: boolean;
-  patchThread: (threadId: string, update: (thread: ChatThread) => ChatThread) => void;
+  patchThread: (
+    threadId: string,
+    update: (thread: ChatThread) => ChatThread,
+    options?: ThreadPatchOptions
+  ) => void;
   clearDraftForThread: (threadId: string) => void;
   getSessionKeyForThread: (threadId: string) => string;
-  setSessionKeyForThread: (threadId: string, sessionKey: string) => void;
   onClearChatError: () => void;
   onChatError: (error: unknown, providerLabel: string) => void;
   streaming: ChatStreamingController;
@@ -81,7 +92,6 @@ export function useChatStreaming({
   patchThread,
   clearDraftForThread,
   getSessionKeyForThread,
-  setSessionKeyForThread,
   onClearChatError,
   onChatError,
   streaming,
@@ -221,9 +231,7 @@ export function useChatStreaming({
       if (!baseMessages.some((message) => message.role === "user")) return;
 
       const threadId = activeThread.id;
-      const previousSessionKey = getSessionKeyForThread(threadId);
-      const nextSessionKey = createId();
-      setSessionKeyForThread(threadId, nextSessionKey);
+      const sessionKey = getSessionKeyForThread(threadId);
       const nextAssistantMessageId = createId();
       const newAssistantMessage: ChatMessage = {
         id: nextAssistantMessageId,
@@ -252,7 +260,7 @@ export function useChatStreaming({
       await streamAssistantResponse({
         threadId,
         assistantMessageId: nextAssistantMessageId,
-        sessionKey: nextSessionKey,
+        sessionKey,
         requestMessages,
         selectedBackend,
         selectedModel,
@@ -268,10 +276,10 @@ export function useChatStreaming({
             backend: selectedBackend,
             model: selectedModel,
             messages: [...baseMessages, newAssistantMessage],
-          }));
-        },
-        onEmptyResponse: () => {
-          setSessionKeyForThread(threadId, previousSessionKey);
+          }), {
+            allowMessageShrink: true,
+            reason: "regenerate-from-assistant",
+          });
         },
         onComplete: streaming.completeStreaming,
         abortController: controller,
@@ -287,7 +295,6 @@ export function useChatStreaming({
       providerLabel,
       selectedBackend,
       selectedModel,
-      setSessionKeyForThread,
       streaming,
     ]
   );
@@ -314,9 +321,7 @@ export function useChatStreaming({
       });
 
       const threadId = activeThread.id;
-      const previousSessionKey = getSessionKeyForThread(threadId);
-      const nextSessionKey = createId();
-      setSessionKeyForThread(threadId, nextSessionKey);
+      const sessionKey = getSessionKeyForThread(threadId);
       const newAssistantMessageId = createId();
       const newAssistantMessage: ChatMessage = {
         id: newAssistantMessageId,
@@ -345,7 +350,7 @@ export function useChatStreaming({
       await streamAssistantResponse({
         threadId,
         assistantMessageId: newAssistantMessageId,
-        sessionKey: nextSessionKey,
+        sessionKey,
         requestMessages,
         selectedBackend,
         selectedModel,
@@ -362,10 +367,10 @@ export function useChatStreaming({
             backend: selectedBackend,
             model: selectedModel,
             messages: [...updatedHistory, newAssistantMessage],
-          }));
-        },
-        onEmptyResponse: () => {
-          setSessionKeyForThread(threadId, previousSessionKey);
+          }), {
+            allowMessageShrink: true,
+            reason: "edit-user-message",
+          });
         },
         onComplete: streaming.completeStreaming,
         abortController: controller,
@@ -381,7 +386,6 @@ export function useChatStreaming({
       providerLabel,
       selectedBackend,
       selectedModel,
-      setSessionKeyForThread,
       streaming,
     ]
   );

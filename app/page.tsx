@@ -75,7 +75,6 @@ export default function Page() {
     createNewThread,
     deleteThread,
     renameThread,
-    setSessionKeyForThread,
     getSessionKeyForThread,
   } = useChatThreads({ streamingThreadId });
 
@@ -133,7 +132,6 @@ export default function Page() {
     patchThread,
     clearDraftForThread,
     getSessionKeyForThread,
-    setSessionKeyForThread,
     onClearChatError: () => clearUiError("chat"),
     onChatError: (error, providerLabel) => showUiError("chat", error, { providerLabel }),
     streaming,

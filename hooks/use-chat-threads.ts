@@ -4,11 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ATTACHMENT_DRAFTS_BY_THREAD_KEY, DRAFTS_BY_THREAD_KEY } from "../lib/constants";
 import { createThread, attachmentDraftsMapFromRaw, draftsMapFromRaw } from "../lib/storage";
 import {
+  guardThreadHistory,
   persistStoredThreadSelection,
   persistStoredThreads,
   readStoredThreadSelection,
 } from "../lib/thread-storage";
-import type { ChatArtifact, ChatAttachment, ChatThread } from "../lib/types";
+import type { ChatArtifact, ChatAttachment, ChatThread, ThreadPatchOptions } from "../lib/types";
 import { areAttachmentsEqual } from "../lib/utils";
 
 type UseChatThreadsOptions = {
@@ -21,7 +22,6 @@ export function useChatThreads({ streamingThreadId }: UseChatThreadsOptions) {
   const [draftsByThread, setDraftsByThread] = useState<Record<string, string>>({});
   const [attachmentDraftsByThread, setAttachmentDraftsByThread] = useState<Record<string, ChatAttachment[]>>({});
   const [promptArtifactsByThread, setPromptArtifactsByThread] = useState<Record<string, ChatArtifact[]>>({});
-  const [sessionKeysByThread, setSessionKeysByThread] = useState<Record<string, string>>({});
   const [prompt, setPrompt] = useState("");
   const [composerAttachments, setComposerAttachments] = useState<ChatAttachment[]>([]);
   const [isStorageHydrated, setIsStorageHydrated] = useState(false);
@@ -29,6 +29,7 @@ export function useChatThreads({ streamingThreadId }: UseChatThreadsOptions) {
   const promptRef = useRef("");
   const selectedThreadIdRef = useRef("");
   const threadsRef = useRef<ChatThread[]>([]);
+  const allowedMessageShrinkByThreadRef = useRef(new Map<string, string[]>());
 
   const activeThread = useMemo(
     () => threads.find((thread) => thread.id === selectedThreadId) ?? null,
@@ -57,14 +58,39 @@ export function useChatThreads({ streamingThreadId }: UseChatThreadsOptions) {
     threadsRef.current = threads;
   }, [threads]);
 
-  const patchThread = useCallback((threadId: string, update: (thread: ChatThread) => ChatThread) => {
+  const patchThread = useCallback((
+    threadId: string,
+    update: (thread: ChatThread) => ChatThread,
+    options: ThreadPatchOptions = {}
+  ) => {
     setThreads((current) => {
       const threadIndex = current.findIndex((thread) => thread.id === threadId);
       if (threadIndex < 0) return current;
 
       const existing = current[threadIndex];
-      const nextThread = update(existing);
+      const updatedThread = update(existing);
+      const { thread: nextThread, recovered } = guardThreadHistory(existing, updatedThread, options);
       if (nextThread === existing) return current;
+
+      if (
+        options.allowMessageShrink &&
+        !recovered &&
+        nextThread.messages.length < existing.messages.length
+      ) {
+        allowedMessageShrinkByThreadRef.current.set(
+          threadId,
+          nextThread.messages.map((message) => message.id)
+        );
+      }
+
+      if (recovered) {
+        console.warn("[standard-ui] blocked unsafe chat history shrink", {
+          threadId,
+          previousMessageCount: existing.messages.length,
+          nextMessageCount: updatedThread.messages.length,
+          reason: options.reason || "unspecified",
+        });
+      }
 
       const next = current.slice();
       next[threadIndex] = nextThread;
@@ -225,18 +251,7 @@ export function useChatThreads({ streamingThreadId }: UseChatThreadsOptions) {
     [patchThread]
   );
 
-  const setSessionKeyForThread = useCallback((threadId: string, sessionKey: string) => {
-    if (!threadId || !sessionKey) return;
-    setSessionKeysByThread((current) => ({
-      ...current,
-      [threadId]: sessionKey,
-    }));
-  }, []);
-
-  const getSessionKeyForThread = useCallback(
-    (threadId: string) => sessionKeysByThread[threadId] || threadId,
-    [sessionKeysByThread]
-  );
+  const getSessionKeyForThread = useCallback((threadId: string) => threadId, []);
 
   useEffect(() => {
     try {
@@ -262,15 +277,24 @@ export function useChatThreads({ streamingThreadId }: UseChatThreadsOptions) {
   useEffect(() => {
     if (!isStorageHydrated || !threads.length) return;
     const timerId = window.setTimeout(() => {
-      const result = persistStoredThreads(localStorage, threads, streamingThreadId);
+      const result = persistStoredThreads(localStorage, threads, streamingThreadId, {
+        allowMessageShrinkThreadMessageIds: allowedMessageShrinkByThreadRef.current,
+      });
       if (result.status === "skipped-shrink") {
         console.warn("[standard-ui] skipped shrinking thread persistence during active stream", {
           previousMessageCount: result.previousMessageCount,
           nextMessageCount: result.nextMessageCount,
           streamingThreadId: result.streamingThreadId,
         });
+      } else if (result.status === "recovered-shrink") {
+        console.warn("[standard-ui] recovered chat history before persistence", {
+          recoveredThreadIds: result.recoveredThreadIds,
+        });
+        allowedMessageShrinkByThreadRef.current.clear();
       } else if (result.status === "failed") {
         console.warn("[standard-ui] failed to persist threads", result.error);
+      } else {
+        allowedMessageShrinkByThreadRef.current.clear();
       }
     }, 220);
     return () => window.clearTimeout(timerId);
@@ -384,35 +408,6 @@ export function useChatThreads({ streamingThreadId }: UseChatThreadsOptions) {
     }
   }, [threads, selectedThreadId]);
 
-  useEffect(() => {
-    setSessionKeysByThread((current) => {
-      const validThreadIds = new Set(threads.map((thread) => thread.id));
-      let changed = false;
-      const next: Record<string, string> = {};
-
-      for (const thread of threads) {
-        const existing = current[thread.id];
-        if (existing) {
-          next[thread.id] = existing;
-          continue;
-        }
-        next[thread.id] = thread.id;
-        changed = true;
-      }
-
-      for (const threadId of Object.keys(current)) {
-        if (!validThreadIds.has(threadId)) {
-          changed = true;
-        }
-      }
-
-      if (!changed && Object.keys(next).length === Object.keys(current).length) {
-        return current;
-      }
-      return next;
-    });
-  }, [threads]);
-
   return {
     threads,
     threadsRef,
@@ -435,7 +430,6 @@ export function useChatThreads({ streamingThreadId }: UseChatThreadsOptions) {
     createNewThread,
     deleteThread,
     renameThread,
-    setSessionKeyForThread,
     getSessionKeyForThread,
   };
 }

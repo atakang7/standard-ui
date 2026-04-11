@@ -1,4 +1,11 @@
-import type { ChatMessageMetrics, ChatSettings, ChatThread, RequestMessage, StreamChunk } from "./types";
+import type {
+  ChatMessageMetrics,
+  ChatSettings,
+  ChatThread,
+  RequestMessage,
+  StreamChunk,
+  ThreadPatchOptions,
+} from "./types";
 import {
   CHAT_PAYLOAD_DEBUG_STORAGE_KEY,
   REQUEST_HARD_CHAR_LIMIT,
@@ -16,7 +23,11 @@ export type StreamChatOptions = {
   selectedBackend: string;
   selectedModel: string;
   settings: ChatSettings;
-  onPatchThread: (threadId: string, update: (thread: ChatThread) => ChatThread) => void;
+  onPatchThread: (
+    threadId: string,
+    update: (thread: ChatThread) => ChatThread,
+    options?: ThreadPatchOptions
+  ) => void;
   onError: (error: unknown) => void;
   onFirstChunk?: () => void;
   onEmptyResponse?: () => void;
@@ -449,7 +460,10 @@ export async function streamAssistantResponse(options: StreamChatOptions) {
           ...thread,
           updatedAt: Date.now(),
           messages: thread.messages.filter((message) => message.id !== assistantMessageId),
-        }));
+        }), {
+          allowMessageShrink: true,
+          reason: "empty-assistant-placeholder",
+        });
       }
       onComplete();
       return;
