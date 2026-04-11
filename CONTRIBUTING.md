@@ -1,32 +1,39 @@
 # Contributing
 
-This repo is meant to stay practical.
+Contributions are expected to preserve the project contracts, not just make the diff pass.
 
-## Ground Rules
+## Before Coding
 
-- Keep changes small, reviewable, and easy to back out.
-- Do not commit secrets, `.env` files, private proxy scripts, logs, or local runtime state.
-- Prefer explicit code over clever abstractions.
-- Keep the UI provider-agnostic unless there is a strong reason not to.
-- If a feature only works with one private deployment setup, it does not belong in the public repo.
+- Identify the owner you are changing: provider adapter, thread state, streaming, UI component, runtime config, or docs.
+- Keep unrelated refactors out unless they remove risk for the same change.
+- Do not introduce private deployment assumptions, secrets, `.env` files, logs, uploads, or ignored proxy helpers.
 
-## Local Workflow
+## Pull Request Standard
 
-```bash
-npm install
-npm run dev
-npm run build
-```
+Every PR should state:
 
-`npm run build` is the required pre-merge check right now.
+- the contract it changes or preserves
+- the user-visible behavior, if any
+- the risk area: history persistence, request windowing, provider compatibility, uploads, Docker/runtime, or visual-only
+- the validation that matches that risk
 
-## Pull Request Shape
+Extra requirements:
 
-- Explain what changed and why.
-- Call out any provider-specific behavior.
-- Mention any follow-up work instead of hiding it in the diff.
-- Avoid bundling refactors with behavior changes unless they are tightly connected.
+- Chat history changes must distinguish thread history from request history.
+- Edit/regenerate changes must cover failure before the first replacement chunk.
+- Provider changes must name the capability or adapter boundary they use.
+- Runtime changes must cover native start and Docker behavior when both are affected.
+- Documentation changes should remove ambiguity; do not add onboarding prose that repeats what the UI or commands already show.
 
-## Documentation Rule
+## Required Checks
 
-If you add a new backend, new settings, new attachment behavior, or a new storage contract, update `README.md` or `docs/engineering.md` in the same change.
+Run the smallest set that proves the changed contract:
+
+| Change | Check |
+| --- | --- |
+| App behavior | `npm run build` and the affected manual flow |
+| Docker/runtime | `docker compose --env-file /dev/null config` and a container smoke test |
+| Provider adapter | model list and one streaming response for the affected provider shape |
+| Docs only | format/link sanity; no build required unless docs reference generated app behavior |
+
+If you skip an applicable check, say why in the PR.

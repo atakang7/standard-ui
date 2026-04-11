@@ -1,14 +1,20 @@
-## Summary
+## Contract
 
-- what changed
-- why it changed
+- Owner changed:
+- History impact: none / thread history / request history / visible history / session key
+- Provider impact: none / adapter / capability / UI branch
+
+## Change
+
+-
 
 ## Validation
 
 - [ ] `npm run build`
-- [ ] tested the affected provider path locally
-- [ ] updated docs if behavior changed
+- [ ] affected manual flow:
+- [ ] Docker/runtime check, if applicable:
+- [ ] docs updated or intentionally not needed:
 
-## Notes
+## Risk
 
-- include rollout risk, follow-up work, or provider-specific caveats here
+-
