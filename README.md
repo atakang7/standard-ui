@@ -1,80 +1,102 @@
-# standard-ui
+<p align="center">
+  <a href="./docs/hero.svg">
+    <img src="./docs/hero.svg" alt="standard-ui provider-agnostic chat workspace" width="1100">
+  </a>
+</p>
 
-A local Next.js chat UI for Ollama, Anthropic, OpenAI-compatible APIs, and custom gateways; conversations stay in browser storage.
+<h1 align="center">standard-ui</h1>
 
-```text
-+----------------------------------+
-| hooks/use-chat-streaming.ts      |
-+----------------------------------+
-                 |
-              HTTP POST
-                 v
-+----------------------------------+
-| app/api/chat/route.ts            |
-+----------------------------------+
-                 |
-              messages
-                 v
-+----------------------------------+
-| app/api/_lib/backends.ts         |
-+----------------------------------+
-                 |
-            provider HTTP
-                 v
-+----------------------------------+
-| Ollama / Anthropic / OpenAI API  |
-+----------------------------------+
-```
+<p align="center">
+  <strong>Provider adapters at the edge. Session-owned history in the client. Local runtime state by default.</strong>
+</p>
 
-CI on pushes to `main` and pull requests:
+<p align="center">
+  Ollama · OpenAI-compatible APIs · Anthropic · custom gateways
+</p>
 
-```text
-+------------+  push/PR  +--------------------------+  runs  +--------+  then  +---------------+
-| GitHub ref | --------> | .github/workflows/ci.yml | -----> | npm ci | -----> | npm run build |
-+------------+           +--------------------------+        +--------+        +---------------+
-```
+<p align="center">
+  <a href="https://github.com/atakang7/standard-ui/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/atakang7/standard-ui/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="./LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-1f6feb.svg"></a>
+  <img alt="Next.js 14" src="https://img.shields.io/badge/Next.js-14-111111?logo=nextdotjs&logoColor=white">
+  <img alt="TypeScript 5" src="https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white">
+</p>
 
-## Run
+<p align="center">
+  <a href="#runtime">Runtime</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#project-contracts">Contracts</a> ·
+  <a href="#docs">Docs</a>
+</p>
 
-Node 22 is required; start Ollama with an installed model for the default backend.
+`standard-ui` is a provider-agnostic chat workspace for local and hosted model backends. Its core contract is narrow: keep provider differences at the API boundary, preserve saved thread history, and avoid turning local runtime state into a managed platform.
 
-```sh
-git clone https://github.com/atakang7/standard-ui.git
-cd standard-ui
-npm ci
-npm run dev
+## Runtime
+
+Development:
+
+```bash
+npm run setup
 ```
 
 Open `http://localhost:3000`.
 
-Production: `npm run build && npm run start`.
+| Need | Command |
+| --- | --- |
+| npm dev | `npm install && npm run dev` |
+| Docker | `docker compose up --build` |
+| Production | `npm install && npm run prod` |
 
-Docker: `docker compose up --build` (available at `http://127.0.0.1:3000`).
+## Configuration
 
-## Config
+Use `.env` only for non-default backends:
 
-Copy `.env.example` to `.env` for non-default providers.
+```bash
+cp .env.example .env
+```
 
-| Var | Default | What |
+| Backend | Minimum config |
+| --- | --- |
+| Ollama | none by default; set `OLLAMA_BASE_URL` only when needed |
+| OpenAI-compatible | `OPENAI_ENABLED=true`, `OPENAI_BASE_URL`, `OPENAI_API_KEY` |
+| Anthropic | `ANTHROPIC_ENABLED=true`, `ANTHROPIC_API_KEY` |
+
+Docker defaults Ollama to `http://host.docker.internal:11434` so a container can talk to a host Ollama process.
+
+## Project Contracts
+
+- Thread history is persisted session data; request history is derived and may be windowed.
+- Provider-specific payloads stay behind `/api/backends`, `/api/models`, and `/api/chat`.
+- Custom gateways live in `.standard-ui/provider-plugins.json`, not in hardcoded UI branches.
+- Uploads and provider plugins live in `.standard-ui`; selected UI state lives in browser storage.
+- Engineering rules live in [`docs/engineering.md`](./docs/engineering.md) and [`docs/frontend-state.md`](./docs/frontend-state.md).
+
+Supported backend shapes:
+
+| Backend | Model list | Chat |
 | --- | --- | --- |
-| `OLLAMA_ENABLED` | `true` | Enable Ollama |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` (host); `http://host.docker.internal:11434` (Docker) | Ollama endpoint |
-| `OPENAI_ENABLED` | unset | Enable compatible API; also enabled by URL or key |
-| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Compatible endpoint |
-| `OPENAI_API_KEY` | unset | API token |
-| `ANTHROPIC_ENABLED` | unset | Enable Anthropic; also enabled by API key |
-| `ANTHROPIC_BASE_URL` | `https://api.anthropic.com/v1` | Anthropic endpoint |
-| `ANTHROPIC_API_KEY` | unset | API token |
-| `MODEL_CAPABILITY_PROBE` | enabled | Set `false` to disable probing |
+| OpenAI-compatible | `GET /models` | `POST /chat/completions` |
+| Anthropic | `GET /models` | `POST /messages` |
+| Ollama | `GET /api/tags` | `POST /api/chat` |
+| Custom gateway | `modelsPath` | `chatPath` |
 
-Custom gateways are configured in Settings and saved in `.standard-ui/provider-plugins.json`.
+Custom provider schema: [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts).
 
-## Limits
+## Repo Map
 
-- No authentication; do not expose the server to untrusted networks.
-- Threads are browser-local; clearing site data can erase them.
-- Uploads: 20 MB per file, 10 files and 40 MB per request.
-- CI runs a build, not automated tests.
-- Runtime files live in `.standard-ui`; do not commit this directory or `.env`.
+- [`app/api/_lib/backends.ts`](./app/api/_lib/backends.ts): provider translation
+- [`hooks/use-chat-threads.ts`](./hooks/use-chat-threads.ts): thread lifecycle
+- [`hooks/use-chat-streaming.ts`](./hooks/use-chat-streaming.ts): request streaming
+- [`lib/thread-storage.ts`](./lib/thread-storage.ts): local thread persistence guard
+- [`components/chat`](./components/chat): chat surface
+- [`docs/frontend-state.md`](./docs/frontend-state.md): frontend state contract
 
-State ownership: [frontend state](docs/frontend-state.md); code boundaries: [engineering](docs/engineering.md).
+## Docs
+
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- [`SECURITY.md`](./SECURITY.md)
+- [`CHANGELOG.md`](./CHANGELOG.md)
+- [`docs/engineering.md`](./docs/engineering.md)
+
+## License
+
+MIT. See [`LICENSE`](./LICENSE).

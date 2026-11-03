@@ -148,21 +148,16 @@ function boundMessagesForRequest(messages: InputMessage[], settings?: ChatSettin
 }
 
 export async function POST(request: Request) {
-  let payload: unknown;
+  let body: RequestBody;
 
   try {
-    payload = await request.json();
+    body = (await request.json()) as RequestBody;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    return NextResponse.json({ error: "Expected a JSON object." }, { status: 400 });
-  }
-
-  const body = payload as RequestBody;
-  const backend = typeof body.backend === "string" ? body.backend.trim() : "";
-  const model = typeof body.model === "string" ? body.model.trim() : "";
+  const backend = body.backend?.trim() || "";
+  const model = body.model?.trim() || "";
   const sessionKey = typeof body.sessionKey === "string" ? body.sessionKey.trim() : "";
   const messages = Array.isArray(body.messages)
     ? body.messages.filter(

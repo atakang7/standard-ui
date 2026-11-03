@@ -1,29 +1,59 @@
-# Engineering boundaries
+# Engineering Contract
 
-Provider translation stays in server adapters; browser history and presentation state stay in their existing owners.
+`standard-ui` is a public, provider-agnostic client. The codebase should make its boundaries visible: provider translation at the server edge, session history in the thread layer, and component state inside components.
 
-## Owners
+## Architecture Boundaries
 
-| Area | Owner |
+| Boundary | Rule |
 | --- | --- |
-| Provider requests and streams | `app/api/_lib/backends.ts` |
-| Custom provider settings | `app/api/_lib/provider-plugins.ts` |
-| Request bounds, abort, edit, regenerate | `hooks/use-chat-streaming.ts` |
-| Thread lifecycle | `hooks/use-chat-threads.ts` |
-| Hydration and persistence guards | `lib/thread-storage.ts` |
-| Display-only interaction state | `components/chat/` |
-| Uploaded files | `app/api/_lib/uploads.ts` |
+| Provider adapters | Provider-specific payloads stay in `app/api/_lib/backends.ts` or custom provider plugin code. |
+| Chat state | Thread lifecycle and persistence stay in `hooks/use-chat-threads.ts` and `lib/thread-storage.ts`. |
+| Streaming | Request construction, abort, edit, and regenerate stay in `hooks/use-chat-streaming.ts`. |
+| UI components | Components render state and own interaction-local state only. |
+| Runtime files | `.standard-ui` is runtime state and must not be committed. |
+| Private infrastructure | Private proxy scripts, credentials, deployment-only assumptions, and local tunnels stay out of the public repo. |
 
-## Rules
+## State Rules
 
-- Validate HTTP input in API routes; normalize provider output before it reaches components.
-- Keep request history separate from saved thread history.
-- Put new provider environment variables in `.env.example` and the README.
-- Keep `.standard-ui`, credentials, and local proxy scripts out of Git.
-- Keep Docker's `.standard-ui` volume across restarts.
+- Persisted thread history is the source of truth for saved conversations.
+- Provider request history is derived data and may be windowed.
+- Changing backend, model, settings, appearance, uploads, or sidebar state must not mutate thread history.
+- Any intentional message-list shrink must pass through the guarded thread persistence path.
+- Storage recovery should prefer preserving older valid history over accepting a shorter unsafe write.
 
-## Verify
+See [`frontend-state.md`](./frontend-state.md) for the full state contract.
 
-- App changes: `npm run build` and the affected browser flow.
-- Docker changes: `docker compose --env-file /dev/null config` and a local HTTP check.
-- Provider changes: list models and stream one response from the affected endpoint.
+## Provider Rules
+
+- Add a capability flag before adding provider-specific UI branches.
+- Normalize provider streams before they reach chat components.
+- Keep API routes thin: validate input, call the adapter, stream normalized output.
+- Custom gateways should use `.standard-ui/provider-plugins.json`; do not hardcode one private gateway into the app.
+- New provider env vars require `.env.example` and README updates.
+
+## UI Rules
+
+- Components may own presentation state: open panels, inline draft text, copy state, viewport/window size, and transient focus state.
+- Components may not own thread persistence, provider routing, request windowing, or active stream identity.
+- Large components should be split by ownership, not by arbitrary line count.
+- Visual polish should reinforce the product contract: calm state, readable controls, no hidden provider coupling.
+
+## Runtime Rules
+
+- Default local development should work without hosted provider credentials.
+- Docker must preserve `.standard-ui` across restarts.
+- The public repo must not depend on ignored proxy helpers.
+- Build output, logs, runtime uploads, and env files stay ignored.
+
+## Required Validation
+
+Use the smallest validation set that covers the touched contract:
+
+| Change | Minimum validation |
+| --- | --- |
+| Chat state, streaming, providers, uploads | `npm run build` plus the affected manual flow |
+| Docker/runtime start | `docker compose --env-file /dev/null config` and a container HTTP smoke test |
+| SVG/docs-only visual asset | XML/format check plus rendered preview |
+| Provider contract | Verify model list and one streaming response for that provider shape |
+
+Do not mark a PR as validated by CI alone when the change depends on a provider, browser storage, Docker networking, or stream timing.
