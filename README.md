@@ -1,102 +1,64 @@
-<p align="center">
-  <a href="./docs/hero.svg">
-    <img src="./docs/hero.svg" alt="standard-ui provider-agnostic chat workspace" width="1100">
-  </a>
-</p>
+# standard-ui
 
-<h1 align="center">standard-ui</h1>
+standard-ui is a local chat interface for Ollama, OpenAI-compatible APIs, Anthropic, and user-configured gateways. It keeps conversation history in the browser while Next.js API routes handle model discovery and streaming across providers.
 
-<p align="center">
-  <strong>Provider adapters at the edge. Session-owned history in the client. Local runtime state by default.</strong>
-</p>
+## Quick start
 
-<p align="center">
-  Ollama · OpenAI-compatible APIs · Anthropic · custom gateways
-</p>
+Requires Node.js 22 and npm. For the default backend, start Ollama on the host with at least one model installed.
 
-<p align="center">
-  <a href="https://github.com/atakang7/standard-ui/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/atakang7/standard-ui/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="./LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-1f6feb.svg"></a>
-  <img alt="Next.js 14" src="https://img.shields.io/badge/Next.js-14-111111?logo=nextdotjs&logoColor=white">
-  <img alt="TypeScript 5" src="https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white">
-</p>
-
-<p align="center">
-  <a href="#runtime">Runtime</a> ·
-  <a href="#configuration">Configuration</a> ·
-  <a href="#project-contracts">Contracts</a> ·
-  <a href="#docs">Docs</a>
-</p>
-
-`standard-ui` is a provider-agnostic chat workspace for local and hosted model backends. Its core contract is narrow: keep provider differences at the API boundary, preserve saved thread history, and avoid turning local runtime state into a managed platform.
-
-## Runtime
-
-Development:
-
-```bash
-npm run setup
+```sh
+git clone https://github.com/atakang7/standard-ui.git
+cd standard-ui
+npm ci
+npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open http://localhost:3000. Ollama is expected at http://localhost:11434 unless you set `OLLAMA_BASE_URL`.
 
-| Need | Command |
-| --- | --- |
-| npm dev | `npm install && npm run dev` |
-| Docker | `docker compose up --build` |
-| Production | `npm install && npm run prod` |
+For a local production build:
+
+```sh
+npm run build
+npm run start
+```
 
 ## Configuration
 
-Use `.env` only for non-default backends:
+Copy the example file, then uncomment only the settings you need:
 
-```bash
+```sh
 cp .env.example .env
 ```
 
-| Backend | Minimum config |
+| Backend | Settings |
 | --- | --- |
-| Ollama | none by default; set `OLLAMA_BASE_URL` only when needed |
+| Ollama | Enabled by default; optional `OLLAMA_BASE_URL` |
 | OpenAI-compatible | `OPENAI_ENABLED=true`, `OPENAI_BASE_URL`, `OPENAI_API_KEY` |
-| Anthropic | `ANTHROPIC_ENABLED=true`, `ANTHROPIC_API_KEY` |
+| Anthropic | `ANTHROPIC_ENABLED=true`, `ANTHROPIC_API_KEY`; optional `ANTHROPIC_BASE_URL` |
+| Custom gateway | Add an integration in Settings; its definition is saved to `.standard-ui/provider-plugins.json` |
 
-Docker defaults Ollama to `http://host.docker.internal:11434` so a container can talk to a host Ollama process.
+Backend credentials and custom gateway headers are held by the server. Do not commit `.env` or `.standard-ui`.
 
-## Project Contracts
+## How it works
 
-- Thread history is persisted session data; request history is derived and may be windowed.
-- Provider-specific payloads stay behind `/api/backends`, `/api/models`, and `/api/chat`.
-- Custom gateways live in `.standard-ui/provider-plugins.json`, not in hardcoded UI branches.
-- Uploads and provider plugins live in `.standard-ui`; selected UI state lives in browser storage.
-- Engineering rules live in [`docs/engineering.md`](./docs/engineering.md) and [`docs/frontend-state.md`](./docs/frontend-state.md).
+`/api/backends` lists configured providers. `/api/models` fetches model metadata; `/api/chat` maps the chat request to the selected provider and returns an NDJSON stream.
 
-Supported backend shapes:
+Thread history and UI preferences are stored in the browser. Uploaded files and custom provider definitions are saved under `.standard-ui` on the server. Switching providers does not rewrite saved conversations. See [frontend state](docs/frontend-state.md) for the storage rules and [engineering](docs/engineering.md) for the provider boundaries.
 
-| Backend | Model list | Chat |
-| --- | --- | --- |
-| OpenAI-compatible | `GET /models` | `POST /chat/completions` |
-| Anthropic | `GET /models` | `POST /messages` |
-| Ollama | `GET /api/tags` | `POST /api/chat` |
-| Custom gateway | `modelsPath` | `chatPath` |
+## Docker
 
-Custom provider schema: [`app/api/_lib/provider-plugins.ts`](./app/api/_lib/provider-plugins.ts).
+```sh
+docker compose up --build
+```
 
-## Repo Map
+The UI is published at http://127.0.0.1:3000, not on the network interface. Compose uses `http://host.docker.internal:11434` for a host Ollama server and the `standard_ui_data` volume for server-side files.
 
-- [`app/api/_lib/backends.ts`](./app/api/_lib/backends.ts): provider translation
-- [`hooks/use-chat-threads.ts`](./hooks/use-chat-threads.ts): thread lifecycle
-- [`hooks/use-chat-streaming.ts`](./hooks/use-chat-streaming.ts): request streaming
-- [`lib/thread-storage.ts`](./lib/thread-storage.ts): local thread persistence guard
-- [`components/chat`](./components/chat): chat surface
-- [`docs/frontend-state.md`](./docs/frontend-state.md): frontend state contract
+## Limitations
 
-## Docs
+- No authentication or user separation. Keep the server on a trusted machine; do not publish it directly to the internet.
+- Browser history is local to each browser profile. Clearing site data can remove it; there is no cross-device sync.
+- Uploads are limited to 20 MB per file, 10 files per request, and 40 MB per request.
+- Provider availability and supported model inputs depend on the configured endpoint.
+- CI runs `npm ci` and `npm run build`. There is no automated test suite.
 
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md)
-- [`SECURITY.md`](./SECURITY.md)
-- [`CHANGELOG.md`](./CHANGELOG.md)
-- [`docs/engineering.md`](./docs/engineering.md)
-
-## License
-
-MIT. See [`LICENSE`](./LICENSE).
+The repository is MIT licensed; see [LICENSE](LICENSE).
