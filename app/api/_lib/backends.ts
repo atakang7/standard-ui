@@ -207,6 +207,7 @@ const MAX_TOTAL_ATTACHMENT_BYTES_PER_REQUEST = 32 * 1024 * 1024;
 const MODEL_CAPABILITIES_CACHE_TTL_MS = 30 * 60 * 1000;
 const MODEL_CAPABILITY_PROBE_ENABLED = process.env.MODEL_CAPABILITY_PROBE !== "false";
 const MODEL_CAPABILITY_PROBE_TIMEOUT_MS = 7000;
+const MODEL_REQUEST_TIMEOUT_MS = 15000;
 const PROBE_IMAGE_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/nG0AAAAASUVORK5CYII=";
 const PROBE_TEXT_FILE_BASE64 = "aGVsbG8=";
@@ -606,12 +607,16 @@ function upsertCachedModelCapabilities(
 }
 
 async function fetchSingleModelCapabilities(backendId: BackendId, modelId: string, signal?: AbortSignal) {
+  const requestSignal = signal
+    ? AbortSignal.any([signal, AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS)])
+    : AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS);
+
   if (backendId === "ollama") {
     const baseUrl = resolveOllamaBaseUrl().replace(/\/$/, "");
     const response = await fetch(`${baseUrl}/api/show`, {
       method: "POST",
       cache: "no-store",
-      signal,
+      signal: requestSignal,
       headers: {
         "Content-Type": "application/json",
       },
@@ -640,7 +645,7 @@ async function fetchSingleModelCapabilities(backendId: BackendId, modelId: strin
 
     const response = await fetch(`${baseUrl}/models/${encodeURIComponent(modelId)}`, {
       cache: "no-store",
-      signal,
+      signal: requestSignal,
       headers,
     });
 
@@ -665,7 +670,7 @@ async function fetchSingleModelCapabilities(backendId: BackendId, modelId: strin
   const baseUrl = resolveAnthropicBaseUrl().replace(/\/$/, "");
   const response = await fetch(`${baseUrl}/models/${encodeURIComponent(modelId)}`, {
     cache: "no-store",
-    signal,
+    signal: requestSignal,
     headers: {
       "Content-Type": "application/json",
       "x-api-key": apiKey,
@@ -2050,6 +2055,7 @@ async function listModelsForProviderPlugin(plugin: ProviderPlugin): Promise<Mode
   try {
     response = await fetchWithLocalhostFallback(endpoint, {
       cache: "no-store",
+      signal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
       headers: {
         Accept: "application/json",
         ...plugin.headers,
@@ -2197,7 +2203,10 @@ export async function listModelsForBackend(backendId: string): Promise<ModelOpti
 
   if (builtInBackendId === "ollama") {
     const baseUrl = resolveOllamaBaseUrl().replace(/\/$/, "");
-    const response = await fetch(`${baseUrl}/api/tags`, { cache: "no-store" });
+    const response = await fetch(`${baseUrl}/api/tags`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
+    });
     if (!response.ok) {
       throw new BackendError(
         "Failed to load models from Ollama.",
@@ -2218,7 +2227,9 @@ export async function listModelsForBackend(backendId: string): Promise<ModelOpti
       const fallback = formatBytes(model.size) || fallbackFamily || "Model";
       let capabilities = resolveDynamicModelCapabilities("ollama", model as Record<string, unknown>);
       try {
-        const detailedCaps = await fetchSingleModelCapabilities("ollama", model.name);
+        const detailedCaps = await fetchSingleModelCapabilities(
+          "ollama", model.name, AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS)
+        );
         capabilities = detailedCaps;
       } catch {
         // Keep list-level capabilities when model details are unavailable.
@@ -2247,6 +2258,7 @@ export async function listModelsForBackend(backendId: string): Promise<ModelOpti
 
     const response = await fetch(`${baseUrl}/models`, {
       cache: "no-store",
+      signal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
       headers,
     });
 
@@ -2280,6 +2292,7 @@ export async function listModelsForBackend(backendId: string): Promise<ModelOpti
   const baseUrl = resolveAnthropicBaseUrl().replace(/\/$/, "");
   const response = await fetch(`${baseUrl}/models`, {
     cache: "no-store",
+    signal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
     headers: {
       "Content-Type": "application/json",
       "x-api-key": apiKey,
