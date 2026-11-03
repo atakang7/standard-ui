@@ -1,10 +1,42 @@
 # standard-ui
 
-standard-ui is a local chat interface for Ollama, OpenAI-compatible APIs, Anthropic, and user-configured gateways. It keeps conversation history in the browser while Next.js API routes handle model discovery and streaming across providers.
+A local Next.js chat UI for Ollama, Anthropic, OpenAI-compatible APIs, and custom gateways; conversations stay in browser storage.
 
-## Quick start
+```text
++----------------------------------+
+| hooks/use-chat-streaming.ts      |
++----------------------------------+
+                 |
+              HTTP POST
+                 v
++----------------------------------+
+| app/api/chat/route.ts            |
++----------------------------------+
+                 |
+              messages
+                 v
++----------------------------------+
+| app/api/_lib/backends.ts         |
++----------------------------------+
+                 |
+            provider HTTP
+                 v
++----------------------------------+
+| Ollama / Anthropic / OpenAI API  |
++----------------------------------+
+```
 
-Requires Node.js 22 and npm. For the default backend, start Ollama on the host with at least one model installed.
+CI on pushes to `main` and pull requests:
+
+```text
++------------+  push/PR  +--------------------------+  runs  +--------+  then  +---------------+
+| GitHub ref | --------> | .github/workflows/ci.yml | -----> | npm ci | -----> | npm run build |
++------------+           +--------------------------+        +--------+        +---------------+
+```
+
+## Run
+
+Node 22 is required; start Ollama with an installed model for the default backend.
 
 ```sh
 git clone https://github.com/atakang7/standard-ui.git
@@ -13,52 +45,36 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. Ollama is expected at http://localhost:11434 unless you set `OLLAMA_BASE_URL`.
+Open `http://localhost:3000`.
 
-For a local production build:
+Production: `npm run build && npm run start`.
 
-```sh
-npm run build
-npm run start
-```
+Docker: `docker compose up --build` (available at `http://127.0.0.1:3000`).
 
-## Configuration
+## Config
 
-Copy the example file, then uncomment only the settings you need:
+Copy `.env.example` to `.env` for non-default providers.
 
-```sh
-cp .env.example .env
-```
+| Var | Default | What |
+| --- | --- | --- |
+| `OLLAMA_ENABLED` | `true` | Enable Ollama |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` (host); `http://host.docker.internal:11434` (Docker) | Ollama endpoint |
+| `OPENAI_ENABLED` | unset | Enable compatible API; also enabled by URL or key |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Compatible endpoint |
+| `OPENAI_API_KEY` | unset | API token |
+| `ANTHROPIC_ENABLED` | unset | Enable Anthropic; also enabled by API key |
+| `ANTHROPIC_BASE_URL` | `https://api.anthropic.com/v1` | Anthropic endpoint |
+| `ANTHROPIC_API_KEY` | unset | API token |
+| `MODEL_CAPABILITY_PROBE` | enabled | Set `false` to disable probing |
 
-| Backend | Settings |
-| --- | --- |
-| Ollama | Enabled by default; optional `OLLAMA_BASE_URL` |
-| OpenAI-compatible | `OPENAI_ENABLED=true`, `OPENAI_BASE_URL`, `OPENAI_API_KEY` |
-| Anthropic | `ANTHROPIC_ENABLED=true`, `ANTHROPIC_API_KEY`; optional `ANTHROPIC_BASE_URL` |
-| Custom gateway | Add an integration in Settings; its definition is saved to `.standard-ui/provider-plugins.json` |
+Custom gateways are configured in Settings and saved in `.standard-ui/provider-plugins.json`.
 
-Backend credentials and custom gateway headers are held by the server. Do not commit `.env` or `.standard-ui`.
+## Limits
 
-## How it works
+- No authentication; do not expose the server to untrusted networks.
+- Threads are browser-local; clearing site data can erase them.
+- Uploads: 20 MB per file, 10 files and 40 MB per request.
+- CI runs a build, not automated tests.
+- Runtime files live in `.standard-ui`; do not commit this directory or `.env`.
 
-`/api/backends` lists configured providers. `/api/models` fetches model metadata; `/api/chat` maps the chat request to the selected provider and returns an NDJSON stream.
-
-Thread history and UI preferences are stored in the browser. Uploaded files and custom provider definitions are saved under `.standard-ui` on the server. Switching providers does not rewrite saved conversations. See [frontend state](docs/frontend-state.md) for the storage rules and [engineering](docs/engineering.md) for the provider boundaries.
-
-## Docker
-
-```sh
-docker compose up --build
-```
-
-The UI is published at http://127.0.0.1:3000, not on the network interface. Compose uses `http://host.docker.internal:11434` for a host Ollama server and the `standard_ui_data` volume for server-side files.
-
-## Limitations
-
-- No authentication or user separation. Keep the server on a trusted machine; do not publish it directly to the internet.
-- Browser history is local to each browser profile. Clearing site data can remove it; there is no cross-device sync.
-- Uploads are limited to 20 MB per file, 10 files per request, and 40 MB per request.
-- Provider availability and supported model inputs depend on the configured endpoint.
-- CI runs `npm ci` and `npm run build`. There is no automated test suite.
-
-The repository is MIT licensed; see [LICENSE](LICENSE).
+State ownership: [frontend state](docs/frontend-state.md); code boundaries: [engineering](docs/engineering.md).
