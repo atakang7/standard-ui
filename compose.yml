@@ -2,7 +2,7 @@ services:
   standard-ui:
     build: .
     ports:
-      - "127.0.0.1:3000:3000"
+      - "3000:3000"
     environment:
       OLLAMA_ENABLED: ${OLLAMA_ENABLED:-true}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}

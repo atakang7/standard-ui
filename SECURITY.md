@@ -1,15 +1,20 @@
-# Security policy
+# Security Policy
 
-Security fixes are made on `main`.
+## Supported Versions
 
-## Report a vulnerability
+Security fixes land on `main` first.
 
-Use GitHub private vulnerability reporting if it is enabled for this repository. Otherwise contact the maintainer privately through GitHub.
+## Reporting a Vulnerability
 
-Include the affected route or file, steps to reproduce, expected impact, and redacted evidence.
+- Do not open a public issue for credential leaks, auth bypasses, SSRF, remote code execution, or anything that could expose user data or provider secrets.
+- If GitHub private vulnerability reporting is available for this repository, use that first.
+- Otherwise contact the maintainer privately through GitHub before sharing details publicly.
 
-Do not post credentials, upload contents, or unpatched vulnerabilities in public issues.
+When reporting a vulnerability, include:
 
-## Deployment boundary
+- a short description of the issue and impact
+- exact steps to reproduce it
+- affected routes, files, or provider configurations
+- sanitized logs, payloads, or screenshots if they help
 
-The app has no login or API authentication. Docker Compose publishes port 3000 on `127.0.0.1`.
+The goal is to acknowledge valid reports quickly, reproduce them, and fix them on `main` before public disclosure.
