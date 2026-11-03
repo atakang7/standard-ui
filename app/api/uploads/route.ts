@@ -39,17 +39,21 @@ export async function POST(request: Request) {
     );
   }
 
+  for (const file of files) {
+    if (file.size <= 0) {
+      return NextResponse.json({ error: `"${file.name}" is empty.` }, { status: 400 });
+    }
+    if (file.size > getMaxSingleAttachmentBytes()) {
+      return NextResponse.json(
+        { error: `"${file.name}" exceeds ${Math.round(getMaxSingleAttachmentBytes() / (1024 * 1024))} MB.` },
+        { status: 400 }
+      );
+    }
+  }
+
   try {
     const attachments: ChatAttachment[] = [];
     for (const file of files) {
-      if (file.size > getMaxSingleAttachmentBytes()) {
-        return NextResponse.json(
-          {
-            error: `"${file.name}" exceeds ${Math.round(getMaxSingleAttachmentBytes() / (1024 * 1024))} MB.`,
-          },
-          { status: 400 }
-        );
-      }
       attachments.push(await storeUpload(file));
     }
 

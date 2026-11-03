@@ -19,7 +19,14 @@ export async function GET(
   }
 
   const contentType = attachment.meta.mimeType || "application/octet-stream";
-  const disposition = attachment.meta.kind === "image" || contentType.startsWith("text/")
+  const inlineImageTypes = new Set([
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/webp",
+    "image/avif",
+  ]);
+  const disposition = attachment.meta.kind === "image" && inlineImageTypes.has(contentType)
     ? "inline"
     : "attachment";
   const body = new Uint8Array(attachment.buffer);
@@ -31,6 +38,7 @@ export async function GET(
       "Content-Length": String(body.byteLength),
       "Content-Disposition": `${disposition}; filename="${escapeFileName(attachment.fileName)}"`,
       "Cache-Control": "private, max-age=31536000, immutable",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

@@ -1,19 +1,14 @@
-## Contract
-
-- Owner changed:
-- History impact: none / thread history / request history / visible history / session key
-- Provider impact: none / adapter / capability / UI branch
-
 ## Change
 
--
+- Area:
+- Behavior:
+- Persistence or provider impact:
 
-## Validation
+## Verification
 
 - [ ] `npm run build`
-- [ ] affected manual flow:
-- [ ] Docker/runtime check, if applicable:
-- [ ] docs updated or intentionally not needed:
+- [ ] Manual flow checked:
+- [ ] Docker check, if relevant:
 
 ## Risk
 
