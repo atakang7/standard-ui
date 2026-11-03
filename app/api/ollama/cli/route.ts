@@ -463,19 +463,14 @@ async function executeCommand(rawCommand: string): Promise<CliResponse> {
 }
 
 export async function POST(request: Request) {
-  let payload: unknown;
+  let body: RequestBody;
   try {
-    payload = await request.json();
+    body = (await request.json()) as RequestBody;
   } catch {
     return NextResponse.json(commandError("", "Invalid JSON body."), { status: 400 });
   }
 
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    return NextResponse.json(commandError("", "Expected a JSON object."), { status: 400 });
-  }
-
-  const body = payload as RequestBody;
-  const command = typeof body.command === "string" ? body.command.trim() : "";
+  const command = body.command?.trim() || "";
   if (!command) {
     return NextResponse.json(commandError("", "Command is required."), { status: 400 });
   }
